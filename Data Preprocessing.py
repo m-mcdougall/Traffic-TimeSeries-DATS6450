@@ -42,10 +42,44 @@ plt.show()
 
 
 
-d = datetime.datetime(2014, 12, 31)
+d = datetime.datetime(2015, 6, 24)
 print(d)
 
-traffic_small = traffic[traffic.index>d]
+traffic_small = traffic[traffic.index>d].copy()
 
 plt.plot(traffic_small.traffic_volume)
 plt.show()
+
+#%%
+
+
+#OHE on the weather_main
+
+for weather in traffic_small.weather_main.unique():
+    traffic_small[weather+'-OHE'] = traffic_small.weather_main 
+    traffic_small[weather+'-OHE'] = traffic_small[weather+'-OHE']==weather
+
+
+#%%
+    
+#Collapse some of the OHE columns
+    
+traffic_small['Visibiliity-OHE'] = traffic_small['Fog-OHE'] + traffic_small['Mist-OHE'] + traffic_small['Haze-OHE'] + traffic_small['Smoke-OHE']
+
+traffic_small['Precipitation-OHE'] = traffic_small['Thunderstorm-OHE'] + traffic_small['Mist-OHE'] + traffic_small['Drizzle-OHE'] + traffic_small['Snow-OHE'] + traffic_small['Rain-OHE'] + traffic_small['Squall-OHE']
+
+traffic_small['Dry-OHE'] = traffic_small['Clear-OHE'] + traffic_small['Clouds-OHE']
+#%%
+#Make Holiday a boolean, rather than explicitly listing the holiday
+
+traffic_small['holiday'] = traffic_small.holiday != 'None'
+
+#%%
+
+#Make a boolean if weekday
+traffic_small['Weekday'] = traffic_small.index.weekday
+traffic_small['Weekday'] = traffic_small['Weekday'] < 5
+
+#%%
+traffic_small.to_csv('Reduced_Data.csv')
+
