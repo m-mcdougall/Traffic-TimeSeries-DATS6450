@@ -10,6 +10,7 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from statsmodels.tsa.seasonal import STL
 
+import statsmodels.tsa.holtwinters as ets 
 import numpy.linalg as la
 
 from statsmodels.regression.linear_model import OLS
@@ -340,3 +341,164 @@ def statstoolsACF_PACF(system_in, lags=20, title_str=''):
     plt.tight_layout()
     plt.show()
 
+
+def plot_prediction_method_axis(train_in, test_in, pred_in, error2, method_str):
+    """
+    Plots the training testing and forecasted data given a prediction method.
+    """
+    fig = plt.figure(figsize=[10,6])
+    ax = fig.add_subplot(1,1,1)
+    
+    pred_diff = len(test_in) - len(pred_in)
+    
+    ax.plot(train_in.index, train_in,  linewidth=1, label= "Training Set")
+    ax.plot(test_in.index, test_in,  linewidth=1, label= "Testing Set")
+    ax.plot(test_in.index[pred_diff::], pred_in,  linewidth=1, label= "Forecast", alpha=0.8)
+    ax.set_xlabel('Time (Hourly)')
+    ax.set_ylabel('Traffic Volume')
+    ax.set_title(f'Traffic Predictions using {method_str}\n MSE: {error2.mean() :0.2f}', fontsize=14)
+    ax.legend()
+    plt.show()
+    
+    return 
+
+
+
+def average_test(train_in, test_in):
+    """
+    Takes a training set and a testing set, and generates a testing forecast using the average method
+    returns the predicted values, error and mse
+    
+    train_in: a training array
+    test_in: a testing array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+
+    if type(test_in)==list:
+        train_in=np.array(test_in)
+    
+    #Take mean of training set, this will be the value for all testing points    
+    train_mean = np.mean(train_in)
+    pred_y=np.ones([len(test_in)])*train_mean
+    
+    #Calculate error
+    error = test_in - pred_y
+    error_2 = error**2
+    
+    return pred_y, error, error_2
+
+
+
+def naive_test(train_in, test_in):
+    """
+    Takes a training set and a testing set, and generates a testing forecast using the naive method
+    returns the predicted values, error and mse
+    
+    train_in: a training array
+    test_in: a testing array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+
+    if type(test_in)==list:
+        test_in=np.array(test_in)
+    
+    #Take mean of training set, this will be the value for all testing points    
+    pred_y=np.ones([len(test_in)])*train_in[-1]
+    
+    #Calculate error
+    error = test_in - pred_y
+    error_2 = error**2
+    
+    return pred_y, error, error_2
+
+
+
+def drift_test(train_in, test_in):
+    """
+    Takes a training set and a testing set, and generates a testing forecast using the drift method
+    returns the predicted values, error and mse
+    
+    train_in: a training array
+    test_in: a testing array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+
+    if type(test_in)==list:
+        test_in=np.array(test_in)
+        
+    pred_y=[]
+    
+    #Loop through the testing values
+    for i in range(0,len(test_in)):
+        
+        val = train_in[-1] + (i+1)*((train_in[-1]-train_in[0]) / (len(train_in)-1))
+        pred_y.append(val)
+    
+    #Calculate error
+    error = test_in - pred_y
+    error_2 = error**2
+    
+    return pred_y, error, error_2
+
+def ses_train(train_in, alpha=0.5):
+    """
+    Takes a training set and generates a training forecast using the ses method
+    returns the predicted vales, error and mse
+    
+    train_in: a training array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+        
+    #Capture predicted values -pre-load with 1st value
+    pred_y=[train_in[0]]
+    
+    #Loop through and get the predicted values
+    for i in range(1,len(train_in)):
+        
+        val = alpha*train_in[i] + (1-alpha)*pred_y[-1]
+        pred_y.append(val)
+    
+
+    #Calculate error
+    error = np.array(train_in[1::]) - np.array(pred_y[0:-1])
+    error_2 = error**2
+    
+    return pred_y, error, error_2
+
+
+def ses_test(train_in, test_in, alpha=0.5):
+    """
+    Takes a training set and a testing set, and generates a testing forecast using the ses method
+    returns the predicted values, error and mse
+    
+    train_in: a training array
+    test_in: a testing array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+
+    if type(test_in)==list:
+        test_in=np.array(test_in)
+    
+    #Get the prediction for the final value in the training set
+    final_pred = ses_train(train_in, alpha=0.5)[0][-1] 
+    
+    val = alpha * test_in[-1] + (1-alpha)*final_pred
+
+    #Take mean of training set, this will be the value for all testing points    
+    pred_y=np.ones([len(test_in)])*val
+    
+    #Calculate error
+    error = test_in - pred_y
+    error_2 = error**2
+    
+    return pred_y, error, error_2
