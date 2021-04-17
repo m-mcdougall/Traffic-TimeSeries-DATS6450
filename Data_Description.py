@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+#To be run Second.
+
 import pandas as pd
 import os
 import numpy as np
@@ -49,7 +51,7 @@ statstoolsACF_PACF(traffic, lags=lags, title_str='Traffic Volume')
 corr=traffic_full.corr()
 fig, ax = plt.subplots(figsize=[11,9])
 sns.heatmap(corr, vmax=1, vmin=-1, center=0, cmap='vlag', annot=True, fmt='0.1f',ax=ax)
-plt.title("Correlation of Auto Sales Data")
+plt.title("Correlation of Traffic Data")
 plt.show()
 
 
