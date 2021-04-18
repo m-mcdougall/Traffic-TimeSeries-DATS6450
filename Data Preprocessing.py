@@ -93,13 +93,6 @@ traffic_small=traffic_small.groupby('date_time').agg(keepFirst).reset_index()
 
 #%%
 
-#Upsample the data to fill in the missing hours
-#Pad to forward-fill the missing values (in a  2, NA, 5, it will fill as 2, 2, 5)
-traffic_small=traffic_small.set_index('date_time').resample('H').pad()
-
-
-#%%
-
 #Group some of the Weather columns
     
 traffic_small['Visibiliity-OHE'] = traffic_small['Fog-OHE'] + traffic_small['Mist-OHE'] + traffic_small['Haze-OHE'] + traffic_small['Smoke-OHE']
@@ -109,6 +102,16 @@ traffic_small['Precipitation-OHE'] = traffic_small['Thunderstorm-OHE'] + traffic
 traffic_small['Dry-OHE'] = traffic_small['Clear-OHE'] + traffic_small['Clouds-OHE']
 
 
+#%%
+x=traffic_small.shape[0]
+print(f'\n\nDatapoints Before the fill: {traffic_small.shape[0]} ')
+
+#Upsample the data to fill in the missing hours
+#Pad to forward-fill the missing values (in a  2, NA, 5, it will fill as 2, 2, 5)
+traffic_small=traffic_small.set_index('date_time').resample('H').pad()
+
+print(f'Datapoints After the fill: {traffic_small.shape[0]} ')
+print(f'Total points added: {traffic_small.shape[0]-x} ')
 
 #%%
 traffic_small.to_csv('Reduced_Data.csv')

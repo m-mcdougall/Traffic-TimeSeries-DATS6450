@@ -34,7 +34,8 @@ lags=24
 #%%
 
 #A - Plot the data
-traffic_df.plot(figsize=(14,5))
+plt.figure(figsize=[14,5], )
+plt.plot(traffic_df,label='Traffic Volume')
 plt.title('Hourly Traffic Volume')
 plt.xlabel('Time')
 plt.ylabel('Number of Cars')
@@ -44,6 +45,9 @@ plt.show()
 #%%
 ## B - Plot the ACF and PACF
 statstoolsACF_PACF(traffic, lags=lags, title_str='Traffic Volume')
+
+
+
 
 #%%
 
@@ -100,7 +104,7 @@ plt.show()
 
 
 #Do ADF Test
-ADF_col(y_train.values, 'traffic_volume')
+ADF_col(y_train.values, 'Traffic Volume')
 
 #%%
 
@@ -109,7 +113,7 @@ Plots the STL decomposition
 """
 
 #One Week
-model = STL(y_train_df.traffic_volume, period=168)
+model = STL(y_train_df.traffic_volume, period=24)
 res=model.fit()
 t=res.trend
 s=res.seasonal
@@ -120,7 +124,7 @@ with plt.rc_context():
     plt.rc("figure", figsize=(10,6))
     fig=res.plot()
     plt.xlabel('Time (Hourly)')
-    plt.suptitle(f'STL Decomposition of Traffic Data - Period 1 Week', fontsize=14, y=1.05)
+    plt.suptitle(f'STL Decomposition of Traffic Data - Period 1 Day', fontsize=14, y=1.05)
     plt.show()
 
 
