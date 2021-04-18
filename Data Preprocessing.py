@@ -42,11 +42,13 @@ plt.show()
 
 
 
-d = datetime.datetime(2015, 6, 24)
+#d = datetime.datetime(2015, 6, 24)
+d = datetime.datetime(2016, 1, 1)
 print(d)
 
 traffic_small = traffic[traffic.index>d].copy()
 
+plt.figure(figsize=[11,3])
 plt.plot(traffic_small.traffic_volume)
 plt.show()
 
