@@ -14,7 +14,6 @@ runfile(os.path.abspath('..\Functions.py'))
 
 #%%
 
-
 ## Start with loading the feature-selected Data
 traffic_full = pd.read_csv('Modeling_Data.csv',index_col=0, parse_dates=[0])
 

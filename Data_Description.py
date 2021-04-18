@@ -38,6 +38,7 @@ traffic_df.plot(figsize=(14,5))
 plt.title('Hourly Traffic Volume')
 plt.xlabel('Time')
 plt.ylabel('Number of Cars')
+plt.legend()
 plt.show()
 
 #%%
@@ -188,8 +189,6 @@ df_feature_select = traffic_full.copy()
 # First, drop the string columns - they have already been encorpertated as OHE columns
 df_feature_select=df_feature_select.drop(['weather_main', 'weather_description'], axis=1)
 
-# Drop extra date-time Column
-df_feature_select=df_feature_select.drop(['date_time.1'], axis=1)
 
 #Perform an SVD analysis on the original feature space.
 s,d,v = la.svd(df_feature_select.values.astype(float))
@@ -209,33 +208,36 @@ print(f"Condition Number\n{la.cond(df_feature_select.values.astype(float))}\n")
 
 #Begin removing features to acheive a higher Adj R-squared and reduce colinearity
 #Isolate the target from the features
-X=df_feature_select.copy().drop(['traffic_volume', ], axis=1).astype(float) #Adj. R-squared  0.090
+X=df_feature_select.copy().drop(['traffic_volume', ], axis=1).astype(float) #Adj. R-squared  0.760
 Y=df_feature_select.traffic_volume
 
 #Drop Features here
 #-----------------------    
-X=X.drop(['snow_1h'], axis=1) #Adj. R-squared  0.090
-X=X.drop(['Squall-OHE'], axis=1) #Adj. R-squared  0.090
-X=X.drop(['Snow-OHE'], axis=1) #Adj. R-squared  0.090
-X=X.drop(['rain_1h'], axis=1) #Adj. R-squared  
-X=X.drop(['Drizzle-OHE'], axis=1) #Adj. R-squared  0.090
-X=X.drop(['Smoke-OHE'], axis=1) #Adj. R-squared  0.090
-X=X.drop(['Fog-OHE'], axis=1) #Adj. R-squared  0.090
-X=X.drop(['Mist-OHE'], axis=1) #Adj. R-squared  0.754
-X=X.drop(['Rain-OHE'], axis=1) #Adj. R-squared  0.754
-X=X.drop(['Dry-OHE'], axis=1) #Adj. R-squared  0.754
-X=X.drop(['Clear-OHE'], axis=1) #Adj. R-squared  0.754
-X=X.drop(['holiday'], axis=1) #Adj. R-squared  0.753
-X=X.drop(['Thunderstorm-OHE'], axis=1) #Adj. R-squared  0.753
-X=X.drop(['Haze-OHE'], axis=1) #Adj. R-squared  0.753
-X=X.drop(['Clouds-OHE'], axis=1) #Adj. R-squared  0.752
-X=X.drop(['Visibiliity-OHE'], axis=1) #Adj. R-squared  0.752
+X=X.drop(['Rain-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['Precipitation-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['Squall-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['Fog-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['Smoke-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['rain_1h'], axis=1) #Adj. R-squared  0.760 
+X=X.drop(['snow_1h'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['Snow-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['Mist-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['Clear-OHE'], axis=1) #Adj. R-squared  0.760
+X=X.drop(['holiday'], axis=1) #Adj. R-squared  0.759
+X=X.drop(['Haze-OHE'], axis=1) #Adj. R-squared  0.758
+X=X.drop(['Drizzle-OHE'], axis=1) #Adj. R-squared  0.758
+X=X.drop(['Thunderstorm-OHE'], axis=1) #Adj. R-squared  0.758
+X=X.drop(['Dry-OHE'], axis=1) #Adj. R-squared  0.758
+X=X.drop(['Visibiliity-OHE'], axis=1) #Adj. R-squared  0.757
+X=X.drop(['Clouds-OHE'], axis=1) #Adj. R-squared  0.754
+
+
 
 #Further variable removal lead to large drop in Adjusted R-Squared 
 # Feature selection complete.
 #-----------------------
-#X=X.drop(['Precipitation-OHE'], axis=1) #Adj. R-squared  0.748
-#X=X.drop(['Weekday'], axis=1) #Adj. R-squared  0.740
+#X=X.drop(['Weekday'], axis=1) #Adj. R-squared  0.744
+#X=X.drop(['temp'], axis=1) #Adj. R-squared  0.659
 
 #Split into train and test
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=False )
@@ -255,7 +257,7 @@ print(f"\nSingularValues:\n{d}\n")
 print(f"Condition Number\n{la.cond(X)}\n")
 
 #All Singular values are >0, therefore no features are highly correlated.
-#Since the condition number is slightly >100, there is co-linearity, but it is minor.
+#Since the condition number is <100, there is no co-linearity between features.
 
 
 #%%
