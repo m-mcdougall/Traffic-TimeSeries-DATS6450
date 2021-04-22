@@ -502,3 +502,19 @@ def ses_test(train_in, test_in, alpha=0.5):
     error_2 = error**2
     
     return pred_y, error, error_2
+
+
+def forecast_error_varience_calc(error_in, x_in):
+    """
+    Input the error calculated and the x_test used to make the predicition
+    
+    Returns estimated varience
+    """
+    
+    #Extract the T and k values from the dimensions of the input x data
+    T = x_in.shape[0] #Number of samples
+    k = x_in.shape[1] #Number of features
+    
+    #Calculate the varience
+    varience = np.sqrt( (1/(T-k-1)) * np.sum(error_in**2))
+    return varience

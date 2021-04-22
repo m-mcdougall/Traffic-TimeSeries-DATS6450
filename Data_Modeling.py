@@ -91,14 +91,39 @@ plot_prediction_method_axis(y_train+1, y_test+1, pred_y, error_2, method_str='Ho
 
 model = OLS(y_train,X_train).fit()
 pred_y = model.predict(X_test)
-error = y_test-pred_y
-error_2 = error**2
+forecast_errors = y_test-pred_y
+error_2 = forecast_errors**2
 
 plot_prediction_method_axis(y_train, y_test, pred_y, error_2, method_str='OLS Multiple Linear Regression')
 
+print(model.summary())
 
 
 
+#Now, for the Residuals
+
+model = OLS(y_train,X_train).fit()
+pred_y = model.predict(X_train)
+residuals = y_train-pred_y
+error_2 = residuals**2
 
 
+plot_corr_full=run_auto_corr(residuals.values, lags=20, symmetrical=True)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
+
+
+forecast_error_varience_calc(residuals, X_train)
+
+
+
+print(model.summary())
+print(f'\n======================\n')
+print(f'The estimated mean of the forecast errors is:   {np.mean(forecast_errors):0.3f}')
+print(f'The estimated variance of the forecast errors is:   {forecast_error_varience_calc(forecast_errors, X_test):0.3f}')
+print()
+print(f'The estimated mean of the residuals is:   {np.mean(residuals):0.3f}')
+print(f'The estimated variance of the residuals is:   {forecast_error_varience_calc(residuals, X_train):0.3f}')
+
+print(f'\n======================\n')
+#Since the varience for the forecast error and residuals is similar, it shows the model adapts well to new information.
 
