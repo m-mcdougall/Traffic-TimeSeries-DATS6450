@@ -108,22 +108,188 @@ residuals = y_train-pred_y
 error_2 = residuals**2
 
 
-plot_corr_full=run_auto_corr(residuals.values, lags=20, symmetrical=True)
+plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
 plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
 
 
 forecast_error_varience_calc(residuals, X_train)
 
+cal_q=calc_Q_Score(residuals.values, y_train.values, lags=24, print_out=False)
 
 
-print(model.summary())
 print(f'\n======================\n')
 print(f'The estimated mean of the forecast errors is:   {np.mean(forecast_errors):0.3f}')
 print(f'The estimated variance of the forecast errors is:   {forecast_error_varience_calc(forecast_errors, X_test):0.3f}')
 print()
 print(f'The estimated mean of the residuals is:   {np.mean(residuals):0.3f}')
 print(f'The estimated variance of the residuals is:   {forecast_error_varience_calc(residuals, X_train):0.3f}')
+print()
+print(f'The calculated Q score is:   {cal_q:0.3f}')
 
 print(f'\n======================\n')
+
 #Since the varience for the forecast error and residuals is similar, it shows the model adapts well to new information.
+#The ACF shows a lot of auto-correlation, meaning there is more information that the model is not capturing
+
+#%%
+
+
+#========
+# ARMA and ARIMA and SARIMA model
+#--------------
+# Start work determining order of the ARIMA model
+# First do a ACF/PACF and GPAC 
+# From there, develop full models
+#========
+
+
+statstoolsACF_PACF(y_train, lags=24, title_str='')
+
+createGPAC(y_train.values, equation_string='', j_val=12, k_val=12)
+
+
+#Looking at the results of the gpac, either ARMA(2,0) or ARMA(6,0) could work
+#Based on the pattern, seasonality likely a factor - SARIMA might be best
+
+#%%
+
+#ARMA(2,0)
+na=2
+nb=0
+
+model=sm.tsa.ARIMA(y_train, (na,0,nb)).fit(trend='nc', disp=0, full_output=True, freq='H')
+na_params=model.params[0:na]*-1
+nb_params=model.params[na::]
+
+#1-step prediction
+model_pred = model.predict(start=1, end=y_train.shape[0])
+residuals= model.resid
+
+
+#Plots the Training set
+plt.figure(figsize=(8,6))
+plt.plot(y_train, label='True Values')
+plt.plot(model_pred, label='Predicted Values', alpha=0.9)
+plt.title('Statsmodels ARMA Predicted Parameters Model')
+plt.xlabel('Sample')
+plt.ylabel('Value')
+plt.legend()
+plt.show()
+
+
+
+
+plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
+
+
+model_pred = model.predict(start=1, end=y_test.shape[0])
+#Plots the Testing set
+plt.figure(figsize=(8,6))
+plt.plot(y_test, label='True Values')
+plt.plot(y_test.index, model_pred, label='Predicted Values', alpha=0.9)
+plt.title('Statsmodels ARMA Predicted Parameters Model')
+plt.xlabel('Sample')
+plt.ylabel('Value')
+plt.legend()
+plt.show()
+
+print('================')
+Q=calc_Q_Score(residuals.values, y_train.values, lags=24, print_out=True)
+deg_f=24-na-nb
+print(f'Degrees of Freedom: {deg_f}')
+
+if Q<chi2.ppf(95, deg_f):
+    print('The Residuals are white')
+else:
+    print('The Residuals are not white')
+print('================')
+
+
+#%%
+
+#ARMA(6,0)
+na=6
+nb=0
+
+model=sm.tsa.ARIMA(y_train, (na,0,nb)).fit(trend='nc', disp=0, full_output=True, freq='H')
+na_params=model.params[0:na]*-1
+nb_params=model.params[na::]
+
+#1-step prediction
+model_pred = model.predict(start=1, end=y_train.shape[0])
+residuals= model.resid
+
+
+#Plots the Training set
+plt.figure(figsize=(8,6))
+plt.plot(y_train, label='True Values')
+plt.plot(model_pred, label='Predicted Values', alpha=0.9)
+plt.title('Statsmodels ARMA Predicted Parameters Model')
+plt.xlabel('Sample')
+plt.ylabel('Value')
+plt.legend()
+plt.show()
+
+plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
+
+
+
+model_pred = model.predict(start=y_train.shape[0], end=y_train.shape[0]+y_test.shape[0])
+#Plots the Training set
+plt.figure(figsize=(8,6))
+plt.plot(y_test, label='True Values')
+plt.plot(model_pred, label='Predicted Values', alpha=0.9)
+plt.title('Statsmodels ARMA Predicted Parameters Model')
+plt.xlabel('Sample')
+plt.ylabel('Value')
+plt.legend()
+plt.show()
+
+
+
+print('================')
+Q=calc_Q_Score(residuals.values, y_train.values, lags=24, print_out=True)
+deg_f=24-na-nb
+print(f'Degrees of Freedom: {deg_f}')
+
+if Q<chi2.ppf(95, deg_f):
+    print('The Residuals are white')
+else:
+    print('The Residuals are not white')
+print('================')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

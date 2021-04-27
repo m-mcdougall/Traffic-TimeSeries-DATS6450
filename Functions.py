@@ -9,9 +9,11 @@ from statsmodels.tsa.stattools import adfuller
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from statsmodels.tsa.seasonal import STL
-
+import statsmodels
 import statsmodels.tsa.holtwinters as ets 
 import numpy.linalg as la
+
+from scipy.stats import chi2
 
 from statsmodels.regression.linear_model import OLS
 #%% 
@@ -518,3 +520,160 @@ def forecast_error_varience_calc(error_in, x_in):
     #Calculate the varience
     varience = np.sqrt( (1/(T-k-1)) * np.sum(error_in**2))
     return varience
+
+    
+def calc_Q_Score(residuals, train_in, lags=5, print_out=False):
+    """
+    Residuals = Error term from the training set (NOT testing)
+    """
+    
+    num_samples=len(train_in)
+    auto_corr =[]
+    
+    residuals = residuals[~np.isnan(residuals)]
+    
+    for i in range(lags):
+        auto_corr.append(auto_corr_cal(residuals, i))
+    
+    summed = np.sum(np.array(auto_corr)[1:]**2)
+    q_score = num_samples * summed
+    
+    if print_out !=False:
+        print(f' The Q Score is {q_score: 0.3f}\n')
+    return q_score
+
+
+
+
+def createGPACTable(auto_corr_in, j_val=12, k_val=12):
+    """
+    Creates the full GPAC table, to feed into the plotting function
+    """
+    
+    if auto_corr_in[0]== auto_corr_in[-1]:
+        response = input('This requires a non-symmetrical Autocorrelation. Is this non-symetrical?')
+        
+        if response.lower() not in ['yes','y','go']:
+            raise ValueError('Please enter a non-symmetrical array.')
+    
+    j_val+=1
+    k_val+=1        
+            
+        
+    big_out=np.zeros([j_val, k_val])
+    
+    for k in range(1,k_val):
+        for j in range(0,j_val):
+            
+            full_array=[]
+            
+            #Generate the top row
+            ry_array=[i for i in range((j-k+1), j+1)] #Generates the array for the top row of the denominator, but backwards
+            ry_array=ry_array[::-1] #Reverse to proper order
+            ry_array=np.array(ry_array)
+            
+            #Generate the rest based off that row
+            for i in range(0,k):
+                full_array.append(ry_array+i)
+            
+            #Concat to a single array
+            full_array=np.array(full_array)
+            
+            
+            
+            #Make the nuerator array
+            numer_array=full_array.copy()
+            
+            #The fiinal column of the numerator is different. Generate it here
+            numer_col=[i for i in range(j+1, j+k+1)]
+            
+            #Replace the final col
+            numer_array[:,-1]=numer_col
+            
+            
+            #Take the absolute values  - all negative Ry are equivalent to Positive Ry
+            numer_array=abs(numer_array)*1.0
+            denom_array=abs(full_array)*1.0
+            
+            #Get the respective numbers from the autocor array
+            
+            
+            numer_array2=numer_array.copy()
+            
+            for i in range(numer_array2.shape[0]):
+                for n in range(numer_array2.shape[1]):
+                    numer_array2[i,n] = auto_corr_in[int(numer_array2[i,n])]
+                   
+                    
+            
+            denom_array2=denom_array.copy()
+            
+            for i in range(denom_array2.shape[0]):
+                for n in range(denom_array2.shape[1]):
+                    denom_array2[i,n] = auto_corr_in[int(denom_array2[i,n])]
+                    
+                    
+            
+            val=np.linalg.det(numer_array2)/np.linalg.det(denom_array2)
+            
+            big_out[j,k]=val
+            big_out_display=pd.DataFrame(big_out)
+            
+    big_out_display=pd.DataFrame(big_out)
+
+    return big_out_display.iloc[:, 1:]
+    
+          
+
+def plotGPAC(gpac_table,equation_string='', decimals=1):
+    """
+    Plots the output of the createGPACTable as a heatmap plot
+    Can change the number of decimal places shown in the annotation using the decimals parameter.
+    """    
+    num_format='0.'+str(decimals)+'f'
+    if equation_string != '':
+        title_str = "GPAC Table\n"+ equation_string
+    else:
+        title_str = "GPAC Table"
+    
+    fig, ax = plt.subplots(figsize=[9,7])
+    sns.heatmap(gpac_table, vmin=-1, vmax=1, cmap='PRGn', annot=True, fmt=num_format, ax=ax)
+    plt.tick_params(axis='both', which='major', labelsize=10, labelbottom = True, bottom=True, top = True, labeltop=True)
+    plt.yticks(rotation=0)
+    plt.xlabel('k  (i.e. na)', fontsize=15)
+    plt.ylabel('j  (i.e. nb)', fontsize=15)
+    plt.title(title_str, fontsize=15)
+
+
+
+
+def createGPAC(system_in, equation_string='', j_val=12, k_val=12):
+    """
+    Creates the GPAC table, including running the autocorrelation and plotting
+    Input data as an non-autocorrelated array
+    """
+    autocor_system = run_auto_corr(system_in, lags=40, symmetrical=False)
+    gpac_table_plot = createGPACTable(autocor_system, j_val, k_val)
+    plotGPAC(gpac_table_plot, equation_string)
+    
+
+
+
+def statstoolsACF_PACF(system_in, lags=20, title_str=''):
+    """
+    Uses the Statstools packages to plot ACF and PACF
+    """
+    ## Plot the ACF and PACF
+    acf = sm.tsa.stattools.acf(system_in, nlags=lags, fft=False)
+    pacf = sm.tsa.stattools.pacf(system_in, nlags=lags)
+    
+    plt.figure()
+    plt.subplot(211)
+    plot_acf(system_in, ax=plt.gca(), lags=lags)
+    plt.subplot(212)
+    plot_pacf(system_in, ax=plt.gca(), lags=lags)
+    plt.xlabel('Lags')
+    plt.suptitle(f'ACF and PACF:\n {title_str}', y=1.08)
+    plt.tight_layout()
+    plt.show()
+
