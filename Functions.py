@@ -677,3 +677,14 @@ def statstoolsACF_PACF(system_in, lags=20, title_str=''):
     plt.tight_layout()
     plt.show()
 
+def diff_seasonal_calc(df_in, interval=1):
+    '''
+    Seasonal differencing - so it omits the intermediate values not in the seasonal increment.
+    '''
+    diff = []
+    for i in range(interval, len(df_in)):
+      value = df_in[i] - df_in[i - interval]
+      diff.append(value)
+
+    diff=pd.DataFrame(diff)
+    return diff
