@@ -14,7 +14,7 @@ import statsmodels.tsa.holtwinters as ets
 import numpy.linalg as la
 from scipy import signal
 from scipy.stats import chi2
-
+from tqdm import tqdm
 from statsmodels.regression.linear_model import OLS
 #%% 
 

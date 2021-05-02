@@ -378,20 +378,42 @@ print(f'The Mean of the Resduals is {np.mean(residuals):0.2f}')
 
 #%%
 
+#One step ahead Prediction
+confirm = input('\n Do you want to run the one-step prediction?\n It will take approx 30 min.\n Enter Yes to continue, No to cancel: \n')
+
+if confirm.lower() in ['yes','y','confirm','go']:
+
+    model_loop = statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit()
+    
+    predictions=[]
+    
+    for i in tqdm(range(len(y_test))):
+        predictions.append(model_loop.forecast(steps=1))
+        model_loop=model_loop.append(np.array(y_test[i:i+1]))
+    
+    
+    
+    predictions_series=pd.concat(predictions)
+    #predictions_series.to_csv('One-step-ahead-Prediction-ARMA(2,0).csv')
+    
+else:
+    print('Loading the pre-run dataset.')
+    predictions_series = pd.read_csv('One-step-ahead-Prediction-ARMA(2,0).csv', index_col=0).iloc[:,0]    
 
 
 
+#Plot the one step ahead 
+plt.figure(figsize=(8,6))
+plt.plot(y_test, label='True Values')
+plt.plot(predictions_series, label='Forecast Values', alpha=0.9)
+plt.title('ARMA Predicted Parameters Model\n One Step Ahead Testing Set')
+plt.xlabel('Sample')
+plt.ylabel('Value')
+plt.legend()
+plt.show()
 
 
-
-
-
-
-
-
-
-
-
+#%%
 
 
 
