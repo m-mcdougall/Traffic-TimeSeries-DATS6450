@@ -688,3 +688,18 @@ def diff_seasonal_calc(df_in, interval=1):
 
     diff=pd.DataFrame(diff)
     return diff
+
+def zero_pole_print(poly_in):
+    """
+    Prints the equation string for zeros or poles
+    """
+    collect=[]
+    for i in poly_in:
+        if i<0:
+            collect.append(str(f"(1+{i*-1:0.4f})"))
+        else:
+            collect.append(str(f"(1-{i:0.4f})"))
+    str_out=''
+    for i in collect:
+        str_out+=i
+    print(str_out)

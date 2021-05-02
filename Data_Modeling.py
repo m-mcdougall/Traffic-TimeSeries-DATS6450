@@ -177,7 +177,7 @@ residuals= model.resid
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='True Values')
 plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('Statsmodels ARMA Predicted Parameters Model')
+plt.title('ARMA Predicted Parameters Model\n Training Set')
 plt.xlabel('Sample')
 plt.ylabel('Value')
 plt.legend()
@@ -191,164 +191,174 @@ plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residu
 
 
 
+#%%
+
+#Generate the Confidence intervals for the Parameters
+
+con_intervals=model.conf_int().drop(['const','sigma2'])
+
+if na!=0:
+    na_vals=model.arparams*-1
+else:
+    na_vals=0
+na_con=con_intervals[0:na].values*-1
+
+
+if nb!=0:
+    nb_vals=model.maparams
+else:
+    nb_vals=0
+nb_con=con_intervals[na::]
+
+print(f'\n============\nConfidence Interval Results:\n============\n')
+print('Na coeffs\n----------')
+if len(na_con)==0:
+    print('None')
+else:
+    [print(f'{na_vals[i]:0.3f}: {na_con[i][0]:0.3f} to {na_con[i][1]:0.3f}') for i in range(len(na_con))]
+
+print('\nNb coeffs\n----------')
+if len(nb_con)==0:
+    print('None')
+else:
+    [print(f'{nb_vals[i]:0.3f}: {nb_con[i][0]:0.3f} to {nb_con[i][1]:0.3f}') for i in range(len(nb_con))]
+
+
+#%%
+    
+#Generate the standard deviation
+
+summary=model.summary().as_text()
+
+#Extract the number of items used to make the STE
+observations=int(summary[summary.find('No. Observations:')+len('No. Observations:'):summary.find('Model:')].strip())
+
+#Extract the STE for each variable
+summary_params=summary[summary.find('const'):summary.find('sigma2')].split('\n')
+summary_params=summary_params[1:-1] #Remove the constant and sigma2 rows
+
+#Extract the STE
+collector=[]
+for param in range(len(summary_params)):
+    collector.append([i for i in summary_params[param].split(' ') if i != ''])
+
+collector=pd.DataFrame(collector)
+collector=collector.filter([0,1,2])
+
+
+#Convert STE to STD
+collector[2]=collector[2].astype(float)*np.sqrt(observations)
+
+
+#Seperate and print the Standard Deviations
+
+na_std=collector.iloc[0:na, :]
+nb_std=collector.iloc[na::, :]
+
+print(f'\n============\nStandard Deviation Results:\n============\n')
+print('Na coeffs\n----------')
+if na_std.shape[0]==0:
+    print('None')
+else:
+    [print(f'{float(na_std.iloc[i,1])*-1:0.3f} STD: {na_std.iloc[i,2]:0.3f}') for i in range(na_std.shape[0])]
+
+print('\nNb coeffs\n----------')
+if nb_std.shape[0]==0:
+    print('None')
+else:
+    [print(f'{float(nb_std.iloc[i,1])*-1:0.3f} STD: {nb_std.iloc[i,2]:0.3f}') for i in range(nb_std.shape[0])]
+
+#%%
+
+
+#Chi-squared Test
+
+print('================')
+Q=calc_Q_Score(residuals.values,  y_train.values, lags=24, print_out=False)
+deg_f=24-na-nb
+
+print(f'The Q Score is: {Q:0.3f}')
+print(f'The Q Crit  is: {chi2.ppf(0.95, deg_f):0.3f}\n')
+
+if Q<chi2.ppf(0.95, deg_f):
+    print('The Residuals are white')
+else:
+    print('The Residuals are not white')
+    
+print(f'\nDegrees of Freedom: {deg_f}')
+print('================')
+
+
+
+
+#%%
+
+
+#8 - Display poles and zeros (roots of numerator and roots of denominator)
+
+
+print('\n Zero-Pole Cancellation\n')
+params = model.params[1:-1]
+poly_y=params[0:na].values
+poly_e=params[na::].values
+
+try:
+    zeros = np.poly(poly_e)[1::]
+    zero_pole_print(zeros)
+except:
+    print('(1-0)')
+ 
+print('----------------')    
+try:
+    poles = np.poly(poly_y)[1::]
+    zero_pole_print(poles)
+except:
+    print('(1-0)')    
+
+    
+  #%%  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%%
+#Plots the Testing set
 model_forecast = model.predict(start=y_train.shape[0], end=y_train.shape[0]+y_test.shape[0])
-#Plots the Testing set
+
 plt.figure(figsize=(8,6))
 plt.plot(y_test, label='True Values')
 plt.plot(model_forecast[1::], label='Forecast Values', alpha=0.9)
-plt.title('Statsmodels ARMA Predicted Parameters Model')
+plt.title('ARMA Predicted Parameters Model\n Testing Set')
 plt.xlabel('Sample')
 plt.ylabel('Value')
 plt.legend()
 plt.show()
-
-print('================')
-Q=calc_Q_Score(residuals.values, y_train.values, lags=24, print_out=True)
-deg_f=24-na-nb
-print(f'Degrees of Freedom: {deg_f}')
-
-if Q<chi2.ppf(0.95, deg_f):
-    print('The Residuals are white')
-else:
-    print('The Residuals are not white')
-print('================')
-
-
-#%%
-
-#ARMA(6,0)
-na=6
-nb=0
-
-model=sm.tsa.ARIMA(y_train, (na,0,nb)).fit(trend='nc', disp=0, full_output=True, freq='H')
-na_params=model.params[0:na]*-1
-nb_params=model.params[na::]
-
-#1-step prediction
-model_pred = model.predict(start=1, end=y_train.shape[0])
-residuals= model.resid
-
-
-#Plots the Training set
-plt.figure(figsize=(8,6))
-plt.plot(y_train, label='True Values')
-plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('Statsmodels ARMA Predicted Parameters Model')
-plt.xlabel('Sample')
-plt.ylabel('Value')
-plt.legend()
-plt.show()
-
-plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
-
-
-
-model_pred = model.predict(y_test.index.to_pydatetime())
-#Plots the Training set
-plt.figure(figsize=(8,6))
-plt.plot(y_test, label='True Values')
-plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('Statsmodels ARMA Predicted Parameters Model')
-plt.xlabel('Sample')
-plt.ylabel('Value')
-plt.legend()
-plt.show()
-
-
-
-print('================')
-Q=calc_Q_Score(residuals.values, y_train.values, lags=24, print_out=True)
-deg_f=24-na-nb
-print(f'Degrees of Freedom: {deg_f}')
-
-if Q<chi2.ppf(0.95, deg_f):
-    print('The Residuals are white')
-else:
-    print('The Residuals are not white')
-print('================')
-
-
-
-#%%
-
-na=6
-nb=0
-
-model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit()
-na_params=model.params[0:na]*-1
-nb_params=model.params[na::]
-
-#1-step prediction
-model_pred = model.predict(start=1, end=y_train.shape[0])
-residuals= model.resid
-
-
-#Plots the Training set
-plt.figure(figsize=(8,6))
-plt.plot(y_train, label='True Values')
-plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('Statsmodels ARMA Predicted Parameters Model')
-plt.xlabel('Sample')
-plt.ylabel('Value')
-plt.legend()
-plt.show()
-
-
-
-plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
-
-
-
-
-model_forecast = model.forecast(steps=y_test.shape[0])
-#Plots the Testing set
-plt.figure(figsize=(8,6))
-plt.plot(y_test, label='True Values')
-plt.plot(model_forecast[1::], label='Forecast Values', alpha=0.9)
-plt.title('Statsmodels ARMA Predicted Parameters Model')
-plt.xlabel('Sample')
-plt.ylabel('Value')
-plt.legend()
-plt.show()
-
-print('================')
-Q=calc_Q_Score(residuals.values, y_train.values, lags=24, print_out=True)
-deg_f=24-na-nb
-print(f'Degrees of Freedom: {deg_f}')
-
-if Q<chi2.ppf(0.95, deg_f):
-    print('The Residuals are white')
-else:
-    print('The Residuals are not white')
-print('================')
-
-model.score()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
