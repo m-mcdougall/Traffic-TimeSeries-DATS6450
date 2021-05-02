@@ -320,6 +320,80 @@ except:
 
 
 
+#7 - Display the estimated variance of error.
+  
+params = model.params[1:-1]
+na_params=np.array([1]+ list(params[0:na].values))
+nb_params=np.array([1]+ list(params[na::].values))
+
+if na==0:
+    na_params = np.zeros(nb_params.shape)
+    na_params[0] = 1
+
+if na_params.shape[0]<nb_params.shape[0]:
+    na_params=np.pad(na_params, (0,nb_params.shape[0]-na_params.shape[0]), 'constant')
+
+if nb==0:
+    nb_params = np.zeros(na_params.shape)
+    nb_params[0] = 1
+
+if nb_params.shape[0]<na_params.shape[0]:
+    nb_params=np.pad(nb_params, (0,na_params.shape[0]-nb_params.shape[0]), 'constant')
+    
+    
+#Construct the system in reverse to get the error instead of the y   
+sys= (na_params, nb_params, 1)    
+
+#Generate a white noise set using these params
+wn = create_samples(residuals.shape[0], wn_mean=0, wn_var=1)
+
+
+#Process the system
+_,e_dlsim = signal.dlsim(sys, wn)    
+
+print('--------------\n')
+print(f' The Estimated Varience of the Error is {np.var(e_dlsim):0.3f}')
+print('\n--------------')
+
+#%%
+
+#Do a covarience heatmap of all features
+cov=model.cov_params()
+cov=cov.drop(['const', 'sigma2'], axis=0)
+cov=cov.drop(['const', 'sigma2'], axis=1)
+
+fig, ax = plt.subplots(figsize=[6,6])
+sns.heatmap(cov, center=0, cmap='vlag', annot=True, fmt='0.6f',ax=ax)
+plt.title("Covariance Matrix of the Estimated Parameters\n")
+plt.show()
+    
+
+
+
+#%%
+
+#Check for Bias
+print(f'The Mean of the Resduals is {np.mean(residuals):0.2f}')
+
+
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

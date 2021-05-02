@@ -12,7 +12,7 @@ from statsmodels.tsa.seasonal import STL
 import statsmodels
 import statsmodels.tsa.holtwinters as ets 
 import numpy.linalg as la
-
+from scipy import signal
 from scipy.stats import chi2
 
 from statsmodels.regression.linear_model import OLS
@@ -703,3 +703,21 @@ def zero_pole_print(poly_in):
     for i in collect:
         str_out+=i
     print(str_out)
+    
+def create_samples(n_samples, wn_mean=0, wn_var=1):
+    """
+    Creates a normally distrubuted random dataset
+    Import number of samples, mean and std.
+    """
+    
+    #Set variables
+    wn_std = np.sqrt(wn_var)
+    
+    #Guarentee same white noise for replicability
+    np.random.seed(42)
+    
+    #Create the sample
+    e = np.random.normal(wn_mean, wn_std, size=n_samples)
+    
+    return e
+
