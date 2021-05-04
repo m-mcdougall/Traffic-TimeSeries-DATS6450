@@ -266,6 +266,17 @@ print(f"Condition Number\n{la.cond(X)}\n")
 
 #%%
 
+#Do a correlation heatmap of all features
+corr=pd.concat([X, Y], axis=1).corr()
+fig, ax = plt.subplots(figsize=[7,6])
+sns.heatmap(corr, vmax=1, vmin=-1, center=0, cmap='vlag', annot=True, fmt='0.1f',ax=ax)
+plt.title("Correlation of Traffic Data")
+plt.show()
+
+
+
+#%%
+
 #Save the reduced feature space for the modeling steps.
 
 #Merge back ito one Dataframe
