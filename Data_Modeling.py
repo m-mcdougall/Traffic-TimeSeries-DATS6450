@@ -108,7 +108,7 @@ error_2 = residuals**2
 
 
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\nOLS Multiple Linear Regression', original_array=residuals)
 
 
 forecast_error_varience_calc(residuals, X_train)
@@ -122,6 +122,8 @@ print(f'The estimated variance of the forecast errors is:   {forecast_error_vari
 print()
 print(f'The estimated mean of the residuals is:   {np.mean(residuals):0.3f}')
 print(f'The estimated variance of the residuals is:   {forecast_error_varience_calc(residuals, X_train):0.3f}')
+print()
+print(f'The estimated RMSE of the residuals is:   {np.sqrt(np.mean(residuals.values**2)):0.3f}')
 print()
 deg_f=24-3
 print(f'The Q Score is: {cal_q:0.3f}')
@@ -1076,6 +1078,7 @@ print(f'The Varience ratio is {y_test.var()/one_step.var():0.2f}')
 
 #Plot the one step ahead 
 plt.figure(figsize=(8,6))
+plt.plot(y_train, label='Manual Forecast Values', alpha=0.9)
 plt.plot(y_test, label='True Values')
 plt.plot(predictions_series, label='Statsmodels Forecast Values', alpha=0.9)
 plt.plot(y_test.index, one_step[1::], label='Manual Forecast Values', alpha=0.9)
@@ -1093,19 +1096,63 @@ plt.show()
 na_stat= np.array([1,1.019129, -0.229379])
 na_seas= np.array([1]+[0]*11+[-0.166684]+ [0]*11+[0.579342])
 
-np.polymul(na_stat, na_seas)
+poly=np.polymul(na_stat, na_seas)
+
+for i in range(0, len(poly)):
+    if poly[i] != 0.0:
+        print(f'{i}:{poly[i]}')
 
 
 
 
+(1+ 1.019129*y_forecast[i-1] -0.229379*y_forecast[i-2] -0.166684*y_forecast[i-12] 
+-0.169872*y_forecast[i-13] +0.038233*y_forecast[i-14]
++0.579342*y_forecast[i-24]+0.590424*y_forecast[i-25] -0.13288 *y_forecast[i-26])
 
 
 
 
+#%%
+
+
+#Input variables
+steps=y_test.shape[0]
+
+
+#A series that contains all values needed for the predictions.
+#This includes the past values and the predicted values
+values=pd.Series(np.zeros((steps+1)))
+
+y_forecast = pd.Series(pd.concat([y_train[-26::] ,  y_test]))
+#Re-index for easy access
+y_forecast.index=[i for i in range(-26, steps)]
+
+#Now, incrementally make predictions    
+for i in range(0,steps):
+    values[i] = (1+ 1.019129*y_forecast[i-1] +(-0.229379**2)*y_forecast[i-2] +(-0.166684**12)*y_forecast[i-12] 
+                    +(0.579342**24)*y_forecast[i-24])
+
+
+one_step = pd.Series(values)
+
+print(f'The Test varience is {y_test.var():0.2f}')
+print(f'The Predicted varience is {one_step.var():0.2f}')
+print(f'The Varience ratio is {y_test.var()/one_step.var():0.2f}')
 
 
 
+#Plot the one step ahead 
+plt.figure(figsize=(8,6))
+#plt.plot(y_train, label='Manual Forecast Values', alpha=0.9)
+plt.plot(y_test, label='True Values')
+plt.plot(predictions_series, label='Statsmodels Forecast Values', alpha=0.9)
+plt.plot(y_test.index, one_step[1::], label='Manual Forecast Values', alpha=0.9)
+plt.title('ARMA Predicted Parameters Model\n One Step Ahead Testing Set')
+plt.xlabel('Time Point')
+plt.ylabel('Traffic Density')
+plt.legend(loc='lower right')
 
+plt.show()
 
 
 
