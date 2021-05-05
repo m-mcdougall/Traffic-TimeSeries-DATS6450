@@ -1077,8 +1077,6 @@ plt.show()
 
 
 
-#%%
-
 
 #Input variables
 steps=y_test.shape[0]
@@ -1199,6 +1197,133 @@ print('================')
 
 
 
+#========
+# ARMA(1,0) model - Forecast Model
+#--------------
+# Run through a simple ARMA(1,0)
+# Do the initial model and the Diagnostic analysis
+# Then do other model comparison
+#========
+
+
+#ARMA(1,0)
+na=1
+nb=0
+
+model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit()
+na_params=model.params[0:na]*-1
+nb_params=model.params[na::]
+
+#1-step prediction
+model_pred = model.predict(start=1, end=y_train.shape[0])
+residuals= model.resid
+
+
+#Plots the Training set
+plt.figure(figsize=(8,6))
+plt.plot(y_train, label='Training Set')
+plt.plot(model_pred, label='Predicted Values', alpha=0.9)
+plt.title('ARMA(1,0) Model\n Prediction of Training Set')
+plt.xlabel('Time (Hourly)')
+plt.ylabel('Traffic Volume')
+plt.legend()
+plt.show()
 
 
 
+plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(1,0)', original_array=residuals)
+
+statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(1,0) Residuals\n')
+
+
+
+
+#Manual 1-step Prediction with only the significant coefficient
+
+
+#A series that contains all values needed for the predictions.
+#This includes the past values and the predicted values
+values=pd.Series(np.zeros(y_train.shape[0]))
+
+y_predict = pd.Series(y_train).copy()
+#Re-index for easy access
+y_predict.index=[i for i in range(0, y_predict.shape[0])]
+
+#Now, incrementally make predictions    
+for i in range(1,y_predict.shape[0]):
+    values[i] = (0.794529*y_predict[i-1])
+
+values.index = y_train.index
+
+one_step = pd.Series(values.iloc[1::])
+
+residuals = y_train.iloc[1::] - one_step
+
+#Plots the Training set
+plt.figure(figsize=(8,6))
+plt.plot(y_train, label='Training Set')
+plt.plot(model_pred, label='Model Predicted Values', alpha=0.9)
+plt.plot(one_step, label='Forecast Function Predicted Values', alpha=0.9)
+plt.title('ARMA(1,0) Model\n Prediction of Training Set')
+plt.xlabel('Time (Hourly)')
+plt.ylabel('Traffic Volume')
+plt.legend()
+plt.show()
+
+statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(1,0) Residuals\n')
+
+
+
+#%%
+
+
+def h_step_prediction(train_in, test_in, steps=50):
+    """
+    Performes an h-step prediction for the ARMA(1,0) Model
+    """
+    
+    #Input variables
+    furthest_back=1
+    
+    #Collector for final set
+    varience_pred = pd.Series(dtype='float64')
+    
+    
+    #A series that contains all values needed for the predictions.
+    #This includes the past values and the predicted values
+    values=pd.Series(np.zeros((steps+furthest_back+1)))
+    
+    #Re-index for easy access
+    values.index=[i for i in range(-1*furthest_back, steps+1)]
+    
+    #Seed the past values
+    for i in range(-2,0):
+        values[i+1] = train_in[i]
+    
+    #Now, incrementally make predictions    
+    for i in range(1,steps+1):
+        values[i] = ( 0.794529*y_predict[i-1])
+    
+    #Include only the predicted values (Exclude the training values)
+    pred_val=values[furthest_back+1:steps+furthest_back+1]
+    
+    #Return the predicted values
+    varience_pred=varience_pred.append(pred_val)
+    
+    
+    
+    #Create a plot of the predicted vs true value
+    plt.figure(figsize=(8,6))
+    plt.plot(test_in[:steps], label='Test Values')
+    plt.plot(test_in.index[:steps], pred_val, label='Forecast Values')
+    plt.xlabel('Time (Hourly)')
+    plt.ylabel('Traffic Volume')
+    plt.title(f'{steps} Step Prediction \nForecasted Values vs True Values')
+    plt.legend()
+    plt.show()
+
+
+#%%
+    
+h_step_prediction(y_train, y_test, steps=y_test.shape[0])
