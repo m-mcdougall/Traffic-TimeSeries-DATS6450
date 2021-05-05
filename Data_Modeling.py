@@ -53,7 +53,13 @@ for key in method_dict:
 
 
 #Remove if not doing all Qs
-calc_Q_Score(average_train(y_train.values)[1], y_train.values, lags=24, print_out=True)
+print('---------------------')
+print(f'Average Q: {calc_Q_Score(average_train(y_train.values)[1], y_train.values, lags=24, print_out=False):0.2f}')
+print(f'Naive Q: {calc_Q_Score(naive_train(y_train.values)[1], y_train.values, lags=24, print_out=False):0.2f}')
+print(f'Drift Q: {calc_Q_Score(drift_train(y_train.values)[1], y_train.values, lags=24, print_out=False):0.2f}')
+print(f'SES Q: {calc_Q_Score(ses_train(y_train.values)[1], y_train.values, lags=24, print_out=False):0.2f}')
+print('---------------------')
+
 
 #%%
 
@@ -80,6 +86,10 @@ error_2 = error**2
 
 plot_prediction_method_axis(y_train+1, y_test+1, pred_y, error_2, method_str='Holt-Winter')
 
+#Calculate Q-Score
+predictions=holtt.predict(start=1, end=y_train.shape[0])
+residuals = y_train.values - predictions
+print(f'Holt- Winter Q: {calc_Q_Score(residuals, y_train.values, lags=24, print_out=False):0.2f}')
 
 #%%
 

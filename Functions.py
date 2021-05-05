@@ -388,6 +388,38 @@ def average_train(train_in):
     
     return pred_y, error, error_2
 
+
+
+def drift_train(train_in):
+    """
+    Takes a training set and generates a training forecast using the drift method
+    returns the predicted vales, error and mse
+    
+    train_in: a training array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+        
+    #Capture predicted values   
+    pred_y=[np.nan]
+    
+    #Loop through and get the predicted values
+    for i in range(2,len(train_in)):
+        fullT = train_in[0:i]
+        val = fullT[-1] + 1*((fullT[-1]-fullT[0]) / (len(fullT)-1))
+        
+        pred_y.append(val)
+    
+    #Calculate error
+    error = np.array(train_in[1::]) - np.array(pred_y)
+    error_2 = error**2
+    
+    return pred_y, error, error_2
+
+
+
+
 def average_test(train_in, test_in):
     """
     Takes a training set and a testing set, and generates a testing forecast using the average method
@@ -413,7 +445,29 @@ def average_test(train_in, test_in):
     
     return pred_y, error, error_2
 
-
+def naive_train(train_in):
+    """
+    Takes a training set and generates a training forecast using the naive method
+    returns the predicted vales, error and mse
+    
+    train_in: a training array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+        
+    #Capture predicted values   
+    pred_y=[]
+    
+    #Loop through and get the predicted values by averaging
+    for i in range(1,len(train_in)):
+        pred_y.append(train_in[i-1])
+    
+    #Calculate error
+    error = train_in[1::] - pred_y
+    error_2 = error**2
+    
+    return pred_y, error, error_2
 
 def naive_test(train_in, test_in):
     """
