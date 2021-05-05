@@ -1277,8 +1277,16 @@ statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(1,0) Residuals\n')
 
 #%%
 
+#========
+# ARMA(1,0) model - H-step Forecast Model
+#--------------
+# Create and plot an h-step prediction of the testing set
+# Variable step number and plot/return value
+# 
+#========
 
-def h_step_prediction(train_in, test_in, steps=50):
+
+def h_step_prediction(train_in, test_in, steps=50, return_val=False):
     """
     Performes an h-step prediction for the ARMA(1,0) Model
     """
@@ -1298,32 +1306,77 @@ def h_step_prediction(train_in, test_in, steps=50):
     values.index=[i for i in range(-1*furthest_back, steps+1)]
     
     #Seed the past values
-    for i in range(-2,0):
+    for i in range(-2,-0):
         values[i+1] = train_in[i]
     
     #Now, incrementally make predictions    
     for i in range(1,steps+1):
-        values[i] = ( 0.794529*y_predict[i-1])
+        values[i] = ( 0.794529*values[i-1])
     
     #Include only the predicted values (Exclude the training values)
-    pred_val=values[furthest_back+1:steps+furthest_back+1]
+    pred_val=values[furthest_back+1::]
     
     #Return the predicted values
     varience_pred=varience_pred.append(pred_val)
+    varience_pred.index = test_in.index[:steps]
     
+    if return_val == True:
+        return varience_pred
     
-    
-    #Create a plot of the predicted vs true value
-    plt.figure(figsize=(8,6))
-    plt.plot(test_in[:steps], label='Test Values')
-    plt.plot(test_in.index[:steps], pred_val, label='Forecast Values')
-    plt.xlabel('Time (Hourly)')
-    plt.ylabel('Traffic Volume')
-    plt.title(f'{steps} Step Prediction \nForecasted Values vs True Values')
-    plt.legend()
-    plt.show()
+    else:
+        
+        #Create a plot of the predicted vs true value
+        plt.figure(figsize=(8,6))
+        plt.plot(test_in[:steps], label='Test Values')
+        plt.plot(test_in.index[:steps], pred_val, label='Forecast Values')
+        plt.xlabel('Time (Hourly)')
+        plt.ylabel('Traffic Volume')
+        plt.title(f'{steps} Step Prediction \nForecasted Values vs True Values')
+        plt.legend()
+        plt.show()
+
 
 
 #%%
+
+#Plot 50 step Prediction
+h_step_prediction(y_train, y_test, steps=50)
     
+
+#Plot full testing set
 h_step_prediction(y_train, y_test, steps=y_test.shape[0])
+
+
+#%%
+
+#========
+# ARMA(1,0) model - Forecast Model
+#--------------
+# Plot the 1-step prediction of the testing set
+# Using the h-step prediction function
+# 
+#========
+
+
+collect=[]
+
+
+y_forecast=pd.concat([y_train.tail(2), y_test])
+
+for i in range(1, y_forecast.shape[0]-1):
+    collect.append(h_step_prediction(y_forecast.head(i+1), y_forecast.iloc[i+1::], steps=1, return_val=True))
+
+one_step_forecast=pd.concat(collect)
+
+plt.figure(figsize=(8,6))
+plt.plot(y_test, label='Test Values')
+plt.plot(one_step_forecast, label='Forecast Values', alpha=0.9)
+plt.xlabel('Time (Hourly)')
+plt.ylabel('Traffic Volume')
+plt.title(f'1 Step Prediction across the Test Set \nForecasted Values vs True Values')
+plt.legend()
+plt.show()
+
+
+
+#%%
