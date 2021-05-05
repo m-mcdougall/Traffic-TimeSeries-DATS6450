@@ -51,6 +51,12 @@ for key in method_dict:
 
 #%%
 
+
+#Remove if not doing all Qs
+calc_Q_Score(average_train(y_train.values)[1], y_train.values, lags=24, print_out=True)
+
+#%%
+
 #========
 #Holt- Winter
 #========
@@ -162,16 +168,16 @@ createGPAC(y_train.values, equation_string='', j_val=12, k_val=12)
 #%%
 
 #========
-# ARMA(2,0) model
+# ARMA(1,0) model
 #--------------
-# Run through a simple ARMA(2,0)
+# Run through a simple ARMA(1,0)
 # Do the initial model and the Diagnostic analysis
 # Then do other model comparison
 #========
 
 
-#ARMA(2,0)
-na=2
+#ARMA(1,0)
+na=1
 nb=0
 
 model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit()
@@ -187,7 +193,7 @@ residuals= model.resid
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('ARMA(2,0) Model\n Prediction of Training Set')
+plt.title('ARMA(1,0) Model\n Prediction of Training Set')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -196,16 +202,16 @@ plt.show()
 
 
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(2,0)', original_array=residuals)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(1,0)', original_array=residuals)
 
-statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(2,0) Residuals\n')
+statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(1,0) Residuals\n')
 
 
 #%%
 
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
-print('\n      ARMA(2,0)\n')
+print('\n      ARMA(1,0)\n')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 
@@ -401,11 +407,11 @@ if confirm.lower() in ['yes','y','confirm','go']:
     
     
     predictions_series=pd.concat(predictions)
-    #predictions_series.to_csv('One-step-ahead-Prediction-ARMA(2,0).csv')
+    predictions_series.to_csv('One-step-ahead-Prediction-ARMA(1,0).csv')
     
 else:
     print('Loading the pre-run dataset.')
-    predictions_series = pd.read_csv('One-step-ahead-Prediction-ARMA(2,0).csv', index_col=0, parse_dates=[0]).iloc[:,0]    
+    predictions_series = pd.read_csv('One-step-ahead-Prediction-ARMA(1,0).csv', index_col=0, parse_dates=[0]).iloc[:,0]    
 
 
 
@@ -413,7 +419,7 @@ else:
 plt.figure(figsize=(8,6))
 plt.plot(y_test, label='True Values')
 plt.plot(predictions_series, label='Forecast Values', alpha=0.9)
-plt.title('ARMA(2,0) Predicted Parameters Model\n One Step Ahead Testing Set')
+plt.title('ARMA(1,0) Predicted Parameters Model\n One Step Ahead Testing Set')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -427,7 +433,7 @@ plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(y_test, label='Testing Set')
 plt.plot(predictions_series, label='Forecast', alpha=0.9)
-plt.title(f'ARMA(2,0) Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
+plt.title(f'ARMA(1,0) Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -451,17 +457,17 @@ print('\n--------------')
 
 
 #========
-# ARMA(6,0) model
+# ARMA(5,3) model
 #--------------
-# Run through a simple ARMA(6,0)
+# Run through a simple ARMA(5,3)
 # Do the initial model and the Diagnostic analysis
 # Then do other model comparison
 #========
 
 
 #ARMA(6,0)
-na=6
-nb=0
+na=5
+nb=3
 
 model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit()
 na_params=model.params[0:na]*-1
@@ -478,7 +484,7 @@ residuals= model.resid
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('ARMA(6,0) Model\n Prediction of Training Set')
+plt.title('ARMA(5,3) Model\n Prediction of Training Set')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -487,14 +493,14 @@ plt.show()
 
 
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(6,0)', original_array=residuals)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(5,3)', original_array=residuals)
 
-statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(6,0) Residuals\n')
+statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(5,3) Residuals\n')
 #%%
 
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
-print('\n      ARMA(6,0)\n')
+print('\n      ARMA(5,3)\n')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 
@@ -513,7 +519,7 @@ if nb!=0:
     nb_vals=model.maparams
 else:
     nb_vals=0
-nb_con=con_intervals[na::]
+nb_con=con_intervals[na::].values
 
 print(f'\n============\nConfidence Interval Results:\n============\n')
 print('Na coeffs\n----------')
@@ -660,8 +666,8 @@ cov=model.cov_params()
 cov=cov.drop(['const', 'sigma2'], axis=0)
 cov=cov.drop(['const', 'sigma2'], axis=1)
 
-fig, ax = plt.subplots(figsize=[6,6])
-sns.heatmap(cov, center=0, cmap='vlag', annot=True, fmt='0.6f',ax=ax)
+fig, ax = plt.subplots(figsize=[9,8])
+sns.heatmap(cov, center=0, cmap='vlag', annot=True, fmt='0.4f',ax=ax)
 plt.title("Covariance Matrix of the Estimated Parameters\n")
 plt.show()
     
@@ -689,11 +695,11 @@ if confirm.lower() in ['yes','y','confirm','go']:
     
     
     predictions_series=pd.concat(predictions)
-    predictions_series.to_csv('One-step-ahead-Prediction-ARMA(6,0).csv')
+    predictions_series.to_csv('One-step-ahead-Prediction-ARMA(5,3).csv')
     
 else:
     print('Loading the pre-run dataset.')
-    predictions_series = pd.read_csv('One-step-ahead-Prediction-ARMA(6,0).csv', index_col=0, parse_dates=[0]).iloc[:,0]    
+    predictions_series = pd.read_csv('One-step-ahead-Prediction-ARMA(5,3).csv', index_col=0, parse_dates=[0]).iloc[:,0]    
 
 
 
@@ -701,7 +707,7 @@ else:
 plt.figure(figsize=(8,6))
 plt.plot(y_test, label='True Values')
 plt.plot(predictions_series, label='Forecast Values', alpha=0.9)
-plt.title('ARMA(6,0) Predicted Parameters Model\n One Step Ahead Testing Set')
+plt.title('ARMA(5,3) Predicted Parameters Model\n One Step Ahead Testing Set')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -714,7 +720,7 @@ plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(y_test, label='Testing Set')
 plt.plot(predictions_series, label='Forecast', alpha=0.9)
-plt.title(f'ARMA(6,0) Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
+plt.title(f'ARMA(5,3) Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -738,17 +744,17 @@ print('\n--------------')
 #%%
 
 #========
-# SARIMA model (2,0,0)xARIMA(2,0,0)12  model
+# SARIMA model (1,0,0)xARIMA(1,0,0)24  model
 #--------------
 # Run A more complicated model to encorperate the seasonality of the data
 # Do the initial model and the Diagnostic analysis
 # Then compare to previous models
 #========
 
-na=2
+na=1
 nb=0
 
-model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na, 0, nb,), seasonal_order=(2, 0, 0, 12), freq='H').fit()
+model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na, 0, nb,), seasonal_order=(1, 0, 0, 24), freq='H').fit()
 na_params=model.params[0:na]*-1
 nb_params=model.params[na::]
 
@@ -757,31 +763,13 @@ model_pred = model.predict(start=1, end=y_train.shape[0])
 residuals= model.resid
 
 
-#Plots the Training set
-plt.figure(figsize=(8,6))
-plt.plot(y_train, label='True Values')
-plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('ARMA Predicted Parameters Model\n Training Set')
-plt.xlabel('Sample')
-plt.ylabel('Value')
-plt.legend()
-plt.show()
-
-
-
-plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals', original_array=residuals)
-
-
-statstoolsACF_PACF(residuals, lags=24, title_str='SARIMA(2,0,0)12 Residuals\n')
-
 
 
 #Plots the Training set
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('SARIMA(2,0,0)12 Model\n Prediction of Training Set')
+plt.title('SARIMA(1,0,0)24 Model\n Prediction of Training Set')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -790,14 +778,16 @@ plt.show()
 
 
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n SARIMA(2,0,0)12', original_array=residuals)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n SARIMA(2,0,0)24', original_array=residuals)
+
+statstoolsACF_PACF(residuals, lags=24, title_str='SARIMA(1,0,0)24 Residuals\n')
 
 
 #%%
 
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-print('\nARIMA model (2,0,0)xSARIMA(2,0,0)12\n')
+print('\nARIMA model (1,0,0)xSARIMA(1,0,0)24\n')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
@@ -812,7 +802,7 @@ else:
 na_con=con_intervals[0:na].values*-1
 
 seasonal_na_vals = model.seasonalarparams*-1
-seasonal_na_con=con_intervals[na::].values
+seasonal_na_con=con_intervals[na::].values*-1
 
 
 
@@ -921,7 +911,7 @@ except:
 # Display the estimated variance of error.
   
 params = model.params[1:-1]
-na_params=np.array([1]+ list(params[0:na].values)+([0]*10)+[params[na]]+([0]*11)+[params[na+1]])
+na_params=np.array([1]+ list(params[0:na].values)+([0]*23)+[params[na]])
 nb_params=np.array([1]+ list(params[na::].values))
 
 if na==0:
@@ -975,7 +965,7 @@ print(f'The Mean of the Residuals is {np.mean(residuals):0.2f}')
 
 
 #%%
-na=2
+na=1
 nb=0
 
 #One step ahead Prediction
@@ -983,7 +973,7 @@ confirm = input('\n Do you want to run the one-step prediction?\n It will take a
 
 if confirm.lower() in ['yes','y','confirm','go']:
 
-    model_loop = statsmodels.tsa.arima.model.ARIMA(y_train, order=(na, 0, nb,), seasonal_order=(2, 0, 0, 12), freq='H').fit()
+    model_loop = statsmodels.tsa.arima.model.ARIMA(y_train, order=(na, 0, nb,), seasonal_order=(1, 0, 0, 24), freq='H').fit()
     
     predictions=[]
     
@@ -994,11 +984,11 @@ if confirm.lower() in ['yes','y','confirm','go']:
     
     
     predictions_series=pd.concat(predictions)
-    predictions_series.to_csv('One-step-ahead-Prediction-ARMA(2,0)12).csv')
+    predictions_series.to_csv('One-step-ahead-Prediction-SARIMA(1,0,0)24.csv')
     
 else:
     print('Loading the pre-run dataset.')
-    predictions_series = pd.read_csv('One-step-ahead-Prediction-ARMA(2,0)12).csv', index_col=0, parse_dates=[0]).iloc[:,0]    
+    predictions_series = pd.read_csv('One-step-ahead-Prediction-SARIMA(1,0,0)24.csv', index_col=0, parse_dates=[0]).iloc[:,0]    
 
 
 
@@ -1018,7 +1008,7 @@ plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(y_test, label='Testing Set')
 plt.plot(predictions_series, label='Forecast', alpha=0.9)
-plt.title(f'SARIMA(2,0,0)12 Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
+plt.title(f'SARIMA(1,0,0)24 Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -1036,12 +1026,6 @@ print('\n--------------')
 
 
 #%%
-
-model.params
-
-
-#ARIMA model (2,0,0)xARIMA(2,0,0)12 
-#  :(1-1.0191q-1 + 0.2294q-2+0.166684q-12-0.579342q-24)
 
 
 
@@ -1093,25 +1077,6 @@ plt.show()
 
 
 
-na_stat= np.array([1,1.019129, -0.229379])
-na_seas= np.array([1]+[0]*11+[-0.166684]+ [0]*11+[0.579342])
-
-poly=np.polymul(na_stat, na_seas)
-
-for i in range(0, len(poly)):
-    if poly[i] != 0.0:
-        print(f'{i}:{poly[i]}')
-
-
-
-
-(1+ 1.019129*y_forecast[i-1] -0.229379*y_forecast[i-2] -0.166684*y_forecast[i-12] 
--0.169872*y_forecast[i-13] +0.038233*y_forecast[i-14]
-+0.579342*y_forecast[i-24]+0.590424*y_forecast[i-25] -0.13288 *y_forecast[i-26])
-
-
-
-
 #%%
 
 
@@ -1160,11 +1125,77 @@ plt.show()
 
 
 
+#%%
+
+
+
+#========
+
+# ARMA(5,3) model - Removing the insignificant coefficients
+
+#========
+
+
+#Manual 1-step Prediction with only the significant coefficient
+
+
+#A series that contains all values needed for the predictions.
+#This includes the past values and the predicted values
+values=pd.Series(np.zeros(y_train.shape[0]))
+
+y_predict = pd.Series(y_train).copy()
+#Re-index for easy access
+y_predict.index=[i for i in range(0, y_predict.shape[0])]
+
+#Now, incrementally make predictions    
+for i in range(2,y_predict.shape[0]):
+    values[i] = (1+ 0.421700*y_predict[i-2])
+
+values.index = y_train.index
+
+one_step = pd.Series(values.iloc[2::])
+
+residuals = y_train.iloc[2::] - one_step
+
+#Plots the Training set
+plt.figure(figsize=(8,6))
+plt.plot(y_train, label='Training Set')
+plt.plot(one_step, label='Predicted Values', alpha=0.9)
+plt.title('ARMA(5,3) Model, Significant Coefficient only\n Prediction of Training Set')
+plt.xlabel('Time (Hourly)')
+plt.ylabel('Traffic Volume')
+plt.legend()
+plt.show()
 
 
 
 
+plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(5,3)', original_array=residuals)
 
+statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(5,3) Residuals - Significant Coefficient only\n')
+
+
+
+
+#Chi-squared Test
+
+print('================')
+Q=calc_Q_Score(residuals.values,  y_train.values, lags=24, print_out=False)
+deg_f=24-1-0
+
+print(f'The Q Score is: {Q:0.3f}')
+print(f'The Q Crit  is: {chi2.ppf(0.95, deg_f):0.3f}\n')
+
+if Q<chi2.ppf(0.95, deg_f):
+    print('The Residuals are white')
+else:
+    print('The Residuals are not white')
+    
+print(f'\nDegrees of Freedom: {deg_f}')
+print('================')
+
+#%%
 
 
 

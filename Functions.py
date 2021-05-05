@@ -364,7 +364,29 @@ def plot_prediction_method_axis(train_in, test_in, pred_in, error2, method_str):
     
     return 
 
-
+def average_train(train_in):
+    """
+    Takes a training set and generates a training forecast using the average method
+    returns the predicted vales, error and mse
+    
+    train_in: a training array
+    """
+    
+    if type(train_in)==list:
+        train_in=np.array(train_in)
+        
+    #Capture predicted values   
+    pred_y=[]
+    
+    #Loop through and get the predicted values by averaging
+    for i in range(len(train_in)):
+        pred_y.append(np.mean(train_in[0:i]))
+    
+    #Calculate error
+    error = train_in - pred_y
+    error_2 = error**2
+    
+    return pred_y, error, error_2
 
 def average_test(train_in, test_in):
     """

@@ -44,9 +44,15 @@ plt.show()
 
 #%%
 ## B - Plot the ACF and PACF
-statstoolsACF_PACF(traffic, lags=lags, title_str='Traffic Volume')
+statstoolsACF_PACF(traffic, lags=lags, title_str='Traffic Volume: Original Data')
 
 
+#Data is highly seasonal - Find the correct seasonality to difference
+traffic_only=traffic_full.traffic_volume
+
+for i in [12,24,168]:
+    traffic_diff = diff_seasonal_calc(traffic_only, i)
+    statstoolsACF_PACF(traffic_diff, lags=40, title_str=f'Traffic Volume: {i} hours')
 
 
 #%%
@@ -74,6 +80,25 @@ traffic_full.isnull().sum()
 #Isolate the target from the features
 X=traffic_full.copy().drop('traffic_volume', axis=1)
 Y=traffic_full.traffic_volume
+
+
+#Seasonally difference the target data and match it into the features
+Y=diff_seasonal_calc(Y, 24)
+X=X.iloc[24:, ]
+Y.index = X.index
+Y=Y.rename({0:'traffic_volume'}, axis=1)
+Y=Y.traffic_volume
+
+
+#A - Plot the Seasonally differenced data
+plt.figure(figsize=[14,5], )
+plt.plot(Y,label='Traffic Volume')
+plt.title('Hourly Traffic Volume')
+plt.xlabel('Time')
+plt.ylabel('Number of Cars')
+plt.legend()
+plt.show()
+
 
 #Split into train and test
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle = False)
@@ -188,7 +213,7 @@ with plt.rc_context():
 
 #To do feature selection, you need the full dataset.
     
-df_feature_select = traffic_full.copy()
+df_feature_select = pd.concat([X, Y], axis=1)
 
 # First, drop the string columns - they have already been encorpertated as OHE columns
 df_feature_select=df_feature_select.drop(['weather_main', 'weather_description'], axis=1)
@@ -212,36 +237,38 @@ print(f"Condition Number\n{la.cond(df_feature_select.values.astype(float))}\n")
 
 #Begin removing features to acheive a higher Adj R-squared and reduce colinearity
 #Isolate the target from the features
-X=df_feature_select.copy().drop(['traffic_volume', ], axis=1).astype(float) #Adj. R-squared  0.760
+X=df_feature_select.copy().drop(['traffic_volume', ], axis=1).astype(float) #Adj. R-squared  0.122
 Y=df_feature_select.traffic_volume
 
 #Drop Features here
 #-----------------------    
-X=X.drop(['Rain-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['Precipitation-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['Squall-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['Fog-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['Smoke-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['rain_1h'], axis=1) #Adj. R-squared  0.760 
-X=X.drop(['snow_1h'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['Snow-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['Mist-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['Clear-OHE'], axis=1) #Adj. R-squared  0.760
-X=X.drop(['holiday'], axis=1) #Adj. R-squared  0.759
-X=X.drop(['Haze-OHE'], axis=1) #Adj. R-squared  0.758
-X=X.drop(['Drizzle-OHE'], axis=1) #Adj. R-squared  0.758
-X=X.drop(['Thunderstorm-OHE'], axis=1) #Adj. R-squared  0.758
-X=X.drop(['Dry-OHE'], axis=1) #Adj. R-squared  0.758
-X=X.drop(['Visibiliity-OHE'], axis=1) #Adj. R-squared  0.757
-X=X.drop(['Clouds-OHE'], axis=1) #Adj. R-squared  0.754
+X=X.drop(['Haze-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Rain-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Visibiliity-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Squall-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Clouds-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Thunderstorm-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Fog-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Mist-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['rain_1h'], axis=1) #Adj. R-squared  0.122 
+X=X.drop(['snow_1h'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Clear-OHE'], axis=1) #Adj. R-squared  0.122
+X=X.drop(['Smoke-OHE'], axis=1) #Adj. R-squared  0.121
+X=X.drop(['clouds_all'], axis=1) #Adj. R-squared  0.121
+X=X.drop(['Drizzle-OHE'], axis=1) #Adj. R-squared  0.121
+X=X.drop(['holiday'], axis=1) #Adj. R-squared  0.121
+X=X.drop(['Dry-OHE'], axis=1) #Adj. R-squared  0.121
+X=X.drop(['Snow-OHE'], axis=1) #Adj. R-squared  0.120
+X=X.drop(['Precipitation-OHE'], axis=1) #Adj. R-squared  0.118
 
 
 
 #Further variable removal lead to large drop in Adjusted R-Squared 
 # Feature selection complete.
 #-----------------------
-#X=X.drop(['Weekday'], axis=1) #Adj. R-squared  0.744
-#X=X.drop(['temp'], axis=1) #Adj. R-squared  0.659
+#X=X.drop(['Weekday'], axis=1) #Adj. R-squared  0.001
+#X=X.drop(['temp'], axis=1) #Adj. R-squared  0.048
+
 
 #Split into train and test
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=False )
