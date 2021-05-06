@@ -1,21 +1,31 @@
 # -*- coding: utf-8 -*-
+
+#  Basic Imports   #
+
 import pandas as pd
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+#  Statsmodels  #
+
 import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf , plot_pacf
 from statsmodels.tsa.stattools import adfuller
-import seaborn as sns
-from sklearn.model_selection import train_test_split
 from statsmodels.tsa.seasonal import STL
 import statsmodels
 import statsmodels.tsa.holtwinters as ets 
+from statsmodels.regression.linear_model import OLS
+
+#  Other  #
+
+from sklearn.model_selection import train_test_split
 import numpy.linalg as la
 from scipy import signal
 from scipy.stats import chi2
 from tqdm import tqdm
-from statsmodels.regression.linear_model import OLS
+
 #%% 
 
 #========================
