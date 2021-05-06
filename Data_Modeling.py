@@ -49,10 +49,8 @@ for key in method_dict:
     plot_prediction_method_axis(y_train, y_test, average_pred, error_2, method_str=method_dict[key]+' Method')
 
 
-#%%
 
-
-#Remove if not doing all Qs
+#Print Q scores for all training sets
 print('---------------------')
 print(f'Average Q: {calc_Q_Score(average_train(y_train.values)[1], y_train.values, lags=24, print_out=False):0.2f}')
 print(f'Naive Q: {calc_Q_Score(naive_train(y_train.values)[1], y_train.values, lags=24, print_out=False):0.2f}')
@@ -172,7 +170,7 @@ statstoolsACF_PACF(y_train, lags=24, title_str='')
 createGPAC(y_train.values, equation_string='', j_val=12, k_val=12)
 
 
-#Looking at the results of the gpac, either ARMA(2,0) or ARMA(6,0) could work
+#Looking at the results of the gpac, either ARMA(1,0) or ARMA(5,3) could work
 #Based on the pattern, seasonality likely a factor - SARIMA might be best
 
 #%%
@@ -219,6 +217,9 @@ statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(1,0) Residuals\n')
 
 #%%
 
+#Calculate Diagnostic Anlalysis metrics,
+#Other statistical tests with print-outs
+
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('\n      ARMA(1,0)\n')
@@ -257,8 +258,10 @@ else:
 
 
 
+##########
+
     
-#Generate the standard deviation
+##Generate the standard deviation
 
 summary=model.summary().as_text()
 
@@ -283,7 +286,6 @@ collector[2]=collector[2].astype(float)*np.sqrt(observations)
 
 
 #Seperate and print the Standard Deviations
-
 na_std=collector.iloc[0:na, :]
 nb_std=collector.iloc[na::, :]
 
@@ -301,8 +303,10 @@ else:
     [print(f'{float(nb_std.iloc[i,1])*-1:0.3f} STD: {nb_std.iloc[i,2]:0.3f}') for i in range(nb_std.shape[0])]
 
 
-#Chi-squared Test
+##########
 
+
+#Chi-squared Test
 print('================')
 Q=calc_Q_Score(residuals.values,  y_train.values, lags=24, print_out=False)
 deg_f=24-na-nb
@@ -319,12 +323,11 @@ print(f'\nDegrees of Freedom: {deg_f}')
 print('================')
 
 
+##########
 
 
 
 # Display poles and zeros (roots of numerator and roots of denominator)
-
-
 print('\n Zero-Pole Cancellation\n')
 params = model.params[1:-1]
 poly_y=params[0:na].values
@@ -344,9 +347,10 @@ except:
     print('(1-0)')    
 
 
+##########
+    
 
 # Display the estimated variance of error.
-  
 params = model.params[1:-1]
 na_params=np.array([1]+ list(params[0:na].values))
 nb_params=np.array([1]+ list(params[na::].values))
@@ -381,7 +385,14 @@ print(f' The Estimated Varience of the Error is {np.var(e_dlsim):0.3f}')
 print('\n--------------')
 
 
+##########
 
+
+#Check for Bias
+print(f'The Mean of the Residuals is {np.mean(residuals):0.2f}')
+
+
+##########
 
 #Do a covarience heatmap of all features
 cov=model.cov_params()
@@ -395,27 +406,30 @@ plt.show()
     
 
 
-#Check for Bias
-print(f'The Mean of the Residuals is {np.mean(residuals):0.2f}')
 
 
 #%%
 
+##########
 #One step ahead Prediction
-confirm = input('\n Do you want to run the one-step prediction?\n It will take approx 30 min.\n Enter Yes to continue, No to cancel: \n')
+#
+#NOTE: This section has been pre-run and saved as a csv. Select "No" to load the csv
+##########
+
+#Input to re-run or load
+confirm = input('\n Do you want to rerun the one-step prediction?\n It will take approx 30 min.\n Enter Yes to continue, No to load the saved data: \n')
 
 if confirm.lower() in ['yes','y','confirm','go']:
 
+    #Re-run the data
     model_loop = statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit()
     
     predictions=[]
-    
     for i in tqdm(range(len(y_test))):
         predictions.append(model_loop.forecast(steps=1))
         model_loop=model_loop.append(np.array(y_test[i:i+1]))
     
-    
-    
+    #Concat and save the data    
     predictions_series=pd.concat(predictions)
     predictions_series.to_csv('One-step-ahead-Prediction-ARMA(1,0).csv')
     
@@ -426,6 +440,7 @@ else:
 
 
 #Plot the one step ahead 
+#  Testing Set Only
 plt.figure(figsize=(8,6))
 plt.plot(y_test, label='True Values')
 plt.plot(predictions_series, label='Forecast Values', alpha=0.9)
@@ -439,6 +454,7 @@ plt.show()
 
 
 #Plot the one step ahead 
+#  Full Data Set
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(y_test, label='Testing Set')
@@ -450,7 +466,7 @@ plt.legend()
 plt.show()
 
 
-
+#Calculate and compare the forecast errors
 forecast_error = predictions_series- y_test
 
 
@@ -475,7 +491,7 @@ print('\n--------------')
 #========
 
 
-#ARMA(6,0)
+#ARMA(5,3)
 na=5
 nb=3
 
@@ -501,12 +517,16 @@ plt.legend()
 plt.show()
 
 
-
+#Calculate and plot autocorrelation
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
 plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(5,3)', original_array=residuals)
 
 statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(5,3) Residuals\n')
 #%%
+
+#Calculate Diagnostic Anlalysis metrics,
+#Other statistical tests with print-outs
+
 
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -545,6 +565,8 @@ else:
     [print(f'{nb_vals[i]:0.3f}: {nb_con[i][0]:0.3f} to {nb_con[i][1]:0.3f}') for i in range(len(nb_con))]
 
 
+##########
+
 
     
 #Generate the standard deviation
@@ -590,6 +612,13 @@ else:
     [print(f'{float(nb_std.iloc[i,1])*-1:0.3f} STD: {nb_std.iloc[i,2]:0.3f}') for i in range(nb_std.shape[0])]
 
 
+
+
+##########
+
+
+
+
 #Chi-squared Test
 
 print('================')
@@ -609,11 +638,11 @@ print('================')
 
 
 
+##########
+
 
 
 # Display poles and zeros (roots of numerator and roots of denominator)
-
-
 print('\n Zero-Pole Cancellation\n')
 params = model.params[1:-1]
 poly_y=params[0:na].values
@@ -634,8 +663,11 @@ except:
 
 
 
+##########
+
+
+
 # Display the estimated variance of error.
-  
 params = model.params[1:-1]
 na_params=np.array([1]+ list(params[0:na].values))
 nb_params=np.array([1]+ list(params[na::].values))
@@ -671,6 +703,16 @@ print('\n--------------')
 
 
 
+##########
+
+
+#Check for Bias
+print(f'The Mean of the Residuals is {np.mean(residuals):0.2f}')
+
+
+##########
+
+
 #Do a covarience heatmap of all features
 cov=model.cov_params()
 cov=cov.drop(['const', 'sigma2'], axis=0)
@@ -683,27 +725,33 @@ plt.show()
     
 
 
-#Check for Bias
-print(f'The Mean of the Residuals is {np.mean(residuals):0.2f}')
 
 
 #%%
 
+
+##########
 #One step ahead Prediction
-confirm = input('\n Do you want to run the one-step prediction?\n It will take approx 30 min.\n Enter Yes to continue, No to cancel: \n')
+#
+#NOTE: This section has been pre-run and saved as a csv. Select "No" to load the csv
+##########
+
+
+
+#One step ahead Prediction
+confirm = input('\n Do you want to rerun the one-step prediction?\n It will take approx 30 min.\n Enter Yes to continue, No to load the saved data: \n')
 
 if confirm.lower() in ['yes','y','confirm','go']:
 
     model_loop = statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit()
     
+    #Begin re-running the data
     predictions=[]
-    
     for i in tqdm(range(len(y_test))):
         predictions.append(model_loop.forecast(steps=1))
         model_loop=model_loop.append(np.array(y_test[i:i+1]))
     
-    
-    
+    #Concat and save the data to csv
     predictions_series=pd.concat(predictions)
     predictions_series.to_csv('One-step-ahead-Prediction-ARMA(5,3).csv')
     
@@ -714,6 +762,7 @@ else:
 
 
 #Plot the one step ahead 
+#  Testing Data Set Only
 plt.figure(figsize=(8,6))
 plt.plot(y_test, label='True Values')
 plt.plot(predictions_series, label='Forecast Values', alpha=0.9)
@@ -726,6 +775,7 @@ plt.show()
 
 
 #Plot the one step ahead 
+#  Full Data Set
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(y_test, label='Testing Set')
@@ -754,12 +804,14 @@ print('\n--------------')
 #%%
 
 #========
-# SARIMA model (1,0,0)xARIMA(1,0,0)24  model
+# SARIMA model SARIMA(1,0,0)(1,0,0)24  model
 #--------------
 # Run A more complicated model to encorperate the seasonality of the data
 # Do the initial model and the Diagnostic analysis
 # Then compare to previous models
+# Seasonal values are hard-coded into the model
 #========
+
 
 na=1
 nb=0
@@ -768,10 +820,10 @@ model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na, 0, nb,), seasonal_or
 na_params=model.params[0:na]*-1
 nb_params=model.params[na::]
 
+
 #1-step prediction
 model_pred = model.predict(start=1, end=y_train.shape[0])
 residuals= model.resid
-
 
 
 
@@ -779,30 +831,33 @@ residuals= model.resid
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(model_pred, label='Predicted Values', alpha=0.9)
-plt.title('SARIMA(1,0,0)24 Model\n Prediction of Training Set')
+plt.title('SARIMA(1,0,0)(1,0,0)24  Model\n Prediction of Training Set')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
 plt.show()
 
 
-
+#Calculate and plot the auto-correlation
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
-plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n SARIMA(2,0,0)24', original_array=residuals)
+plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n SARIMA(1,0,0)(1,0,0)24 ', original_array=residuals)
 
-statstoolsACF_PACF(residuals, lags=24, title_str='SARIMA(1,0,0)24 Residuals\n')
+statstoolsACF_PACF(residuals, lags=24, title_str='SARIMA(1,0,0)(1,0,0)24  Residuals\n')
 
 
 #%%
 
+#Calculate Diagnostic Anlalysis metrics,
+#Other statistical tests with print-outs
+
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-print('\nARIMA model (1,0,0)xSARIMA(1,0,0)24\n')
+print('\n    SARIMA(1,0,0)(1,0,0)24\n')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
 
 #Generate the Confidence intervals for the Parameters
-
 con_intervals=model.conf_int().drop(['const','sigma2'])
 
 if na!=0:
@@ -813,7 +868,6 @@ na_con=con_intervals[0:na].values*-1
 
 seasonal_na_vals = model.seasonalarparams*-1
 seasonal_na_con=con_intervals[na::].values*-1
-
 
 
 print(f'\n============\nConfidence Interval Results:\n============\n')
@@ -831,9 +885,13 @@ print('\nNb coeffs\n----------')
 print('None')
 
 
+
+
+##########
+
+
     
 #Generate the standard deviation
-
 summary=model.summary().as_text()
 
 #Extract the number of items used to make the STE
@@ -874,8 +932,15 @@ print('\nNb coeffs\n----------')
 print('None')
 
 
-#Chi-squared Test
 
+
+##########
+
+
+
+
+
+#Chi-squared Test
 print('================')
 Q=calc_Q_Score(residuals.values,  y_train.values, lags=24, print_out=False)
 deg_f=24-na-nb
@@ -894,10 +959,11 @@ print('================')
 
 
 
+##########
+
+
 
 # Display poles and zeros (roots of numerator and roots of denominator)
-
-
 print('\n Zero-Pole Cancellation\n')
 params = model.params[1:-1]
 poly_y=params[0:na+2].values
@@ -918,8 +984,12 @@ except:
 
 
 
+
+##########
+    
+    
+
 # Display the estimated variance of error.
-  
 params = model.params[1:-1]
 na_params=np.array([1]+ list(params[0:na].values)+([0]*23)+[params[na]])
 nb_params=np.array([1]+ list(params[na::].values))
@@ -954,6 +1024,15 @@ print(f' The Estimated Varience of the Error is {np.var(e_dlsim):0.3f}')
 print('\n--------------')
 
 
+##########
+
+
+#Check for Bias
+print(f'The Mean of the Residuals is {np.mean(residuals):0.2f}')
+
+
+##########
+
 
 #Do a covarience heatmap of all features
 cov=model.cov_params()
@@ -964,35 +1043,38 @@ fig, ax = plt.subplots(figsize=[6,6])
 sns.heatmap(cov, center=0, cmap='vlag', annot=True, fmt='0.6f',ax=ax)
 plt.title("Covariance Matrix of the Estimated Parameters\n")
 plt.show()
-    
-
-
-#Check for Bias
-print(f'The Mean of the Residuals is {np.mean(residuals):0.2f}')
-
-
+  
 
 
 
 #%%
+
+##########
+#One step ahead Prediction
+#
+#NOTE: This section has been pre-run and saved as a csv. Select "No" to load the csv
+#
+##########
+
+
 na=1
 nb=0
 
 #One step ahead Prediction
-confirm = input('\n Do you want to run the one-step prediction?\n It will take approx 120 min.\n Enter Yes to continue, No to cancel: \n')
+confirm = input('\n Do you want to rerun the one-step prediction?\n It will take approx 120 min.\n Enter Yes to continue, No to load the saved data: \n')
+
 
 if confirm.lower() in ['yes','y','confirm','go']:
 
     model_loop = statsmodels.tsa.arima.model.ARIMA(y_train, order=(na, 0, nb,), seasonal_order=(1, 0, 0, 24), freq='H').fit()
-    
-    predictions=[]
-    
+ 
+    #Re-run the data
+    predictions=[]   
     for i in tqdm(range(len(y_test))):
         predictions.append(model_loop.forecast(steps=1))
         model_loop=model_loop.append(np.array(y_test[i:i+1]))
     
-    
-    
+    #Concat and save data as csv
     predictions_series=pd.concat(predictions)
     predictions_series.to_csv('One-step-ahead-Prediction-SARIMA(1,0,0)24.csv')
     
@@ -1003,10 +1085,11 @@ else:
 
 
 #Plot the one step ahead 
+#Testing Data set
 plt.figure(figsize=(8,6))
 plt.plot(y_test, label='True Values')
 plt.plot(predictions_series, label='Forecast Values', alpha=0.9)
-plt.title('SARIMA(2,0,0)12 Predicted Parameters Model\n One Step Ahead Testing Set')
+plt.title('SARIMA(1,0,0)(1,0,0)24 Predicted Parameters Model\n One Step Ahead Testing Set')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
@@ -1014,18 +1097,22 @@ plt.show()
 
 
 #Plot the one step ahead 
+#Full Dataset
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(y_test, label='Testing Set')
 plt.plot(predictions_series, label='Forecast', alpha=0.9)
-plt.title(f'SARIMA(1,0,0)24 Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
+plt.title(f'SARIMA(1,0,0)(1,0,0)24 Predicted Parameters Model\n One Step Ahead Forecasting\nMSE: {model.mse:0.2f}')
 plt.xlabel('Time (Hourly)')
 plt.ylabel('Traffic Volume')
 plt.legend()
 plt.show()
 
-forecast_error = predictions_series- y_test
 
+
+
+#Calculate the forecast error
+forecast_error = predictions_series- y_test
 
 print('--------------\n')
 print(f' The Estimated Varience of the Residual Error is {np.var(residuals):0.3f}')
@@ -1035,112 +1122,17 @@ print('\n--------------')
 
 
 
-#%%
-
-
-
-
-#One step ahead model - Manual
-
-"""
-Do the 1 Step prediction, and plot
-"""
-
-#Input variables
-steps=y_test.shape[0]
-
-
-#A series that contains all values needed for the predictions.
-#This includes the past values and the predicted values
-values=pd.Series(np.zeros((steps+1)))
-
-y_forecast = pd.Series(pd.concat([y_train[-24::] ,  y_test]))
-#Re-index for easy access
-y_forecast.index=[i for i in range(-24, steps)]
-
-#Now, incrementally make predictions    
-for i in range(1,steps+1):
-    values[i] = (1+ 1.019129*y_forecast[i-1] -0.229379*y_forecast[i-2] -0.166684*y_forecast[i-12] +0.579342*y_forecast[i-24])
-
-one_step = pd.Series(values)
-
-print(f'The Test varience is {y_test.var():0.2f}')
-print(f'The Predicted varience is {one_step.var():0.2f}')
-print(f'The Varience ratio is {y_test.var()/one_step.var():0.2f}')
-
-
-
-#Plot the one step ahead 
-plt.figure(figsize=(8,6))
-plt.plot(y_train, label='Manual Forecast Values', alpha=0.9)
-plt.plot(y_test, label='True Values')
-plt.plot(predictions_series, label='Statsmodels Forecast Values', alpha=0.9)
-plt.plot(y_test.index, one_step[1::], label='Manual Forecast Values', alpha=0.9)
-plt.title('ARMA Predicted Parameters Model\n One Step Ahead Testing Set')
-plt.xlabel('Time Point')
-plt.ylabel('Traffic Density')
-plt.legend(loc='lower right')
-
-plt.show()
 
 #%%
-
-
-
-
-#Input variables
-steps=y_test.shape[0]
-
-
-#A series that contains all values needed for the predictions.
-#This includes the past values and the predicted values
-values=pd.Series(np.zeros((steps+1)))
-
-y_forecast = pd.Series(pd.concat([y_train[-26::] ,  y_test]))
-#Re-index for easy access
-y_forecast.index=[i for i in range(-26, steps)]
-
-#Now, incrementally make predictions    
-for i in range(0,steps):
-    values[i] = (1+ 1.019129*y_forecast[i-1] +(-0.229379**2)*y_forecast[i-2] +(-0.166684**12)*y_forecast[i-12] 
-                    +(0.579342**24)*y_forecast[i-24])
-
-
-one_step = pd.Series(values)
-
-print(f'The Test varience is {y_test.var():0.2f}')
-print(f'The Predicted varience is {one_step.var():0.2f}')
-print(f'The Varience ratio is {y_test.var()/one_step.var():0.2f}')
-
-
-
-#Plot the one step ahead 
-plt.figure(figsize=(8,6))
-#plt.plot(y_train, label='Manual Forecast Values', alpha=0.9)
-plt.plot(y_test, label='True Values')
-plt.plot(predictions_series, label='Statsmodels Forecast Values', alpha=0.9)
-plt.plot(y_test.index, one_step[1::], label='Manual Forecast Values', alpha=0.9)
-plt.title('ARMA Predicted Parameters Model\n One Step Ahead Testing Set')
-plt.xlabel('Time Point')
-plt.ylabel('Traffic Density')
-plt.legend(loc='lower right')
-
-plt.show()
-
-
-
-
-
-
-
-#%%
-
 
 
 #========
 
 # ARMA(5,3) model - Removing the insignificant coefficients
 
+#In this section we generate a forecast funtion for the ARMA(5,3) model
+#That only uses it's one significant coefficient, a2=0.421700
+#This will help us decide if we should use ARMA(5,3) as a final function, or ARMA(1,0)
 #========
 
 
@@ -1151,21 +1143,30 @@ plt.show()
 #This includes the past values and the predicted values
 values=pd.Series(np.zeros(y_train.shape[0]))
 
+#The training dataset, but re-indexed for ease of access
 y_predict = pd.Series(y_train).copy()
-#Re-index for easy access
 y_predict.index=[i for i in range(0, y_predict.shape[0])]
+
 
 #Now, incrementally make predictions    
 for i in range(2,y_predict.shape[0]):
     values[i] = (1+ 0.421700*y_predict[i-2])
 
+#Set the index for ploting
 values.index = y_train.index
 
+#Remove the seeded values
 one_step = pd.Series(values.iloc[2::])
 
+#Calculate Residuals
 residuals = y_train.iloc[2::] - one_step
 
-#Plots the Training set
+
+
+
+
+
+#Plot the Training set
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(one_step, label='Predicted Values', alpha=0.9)
@@ -1177,7 +1178,7 @@ plt.show()
 
 
 
-
+#Run and plot autocorrelation
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
 plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(5,3)', original_array=residuals)
 
@@ -1187,7 +1188,6 @@ statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(5,3) Residuals - Signific
 
 
 #Chi-squared Test
-
 print('================')
 Q=calc_Q_Score(residuals.values,  y_train.values, lags=24, print_out=False)
 deg_f=24-1-0
@@ -1206,12 +1206,11 @@ print('================')
 #%%
 
 
-
 #========
 # ARMA(1,0) model - Forecast Model
 #--------------
-# Run through a simple ARMA(1,0)
-# Do the initial model and the Diagnostic analysis
+# Create the forecast model for the ARMA(1,0)
+# Perform 1-step prediction
 # Then do other model comparison
 #========
 
@@ -1224,12 +1223,12 @@ model=statsmodels.tsa.arima.model.ARIMA(y_train, order=(na,0,nb), freq='H').fit(
 na_params=model.params[0:na]*-1
 nb_params=model.params[na::]
 
-#1-step prediction
+#1-step prediction Using the statsmodel model for comparison
 model_pred = model.predict(start=1, end=y_train.shape[0])
 residuals= model.resid
 
 
-#Plots the Training set
+#Plots the Training set Using the statsmodel model
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(model_pred, label='Predicted Values', alpha=0.9)
@@ -1240,7 +1239,7 @@ plt.legend()
 plt.show()
 
 
-
+#Autocorrelation
 plot_corr_full=run_auto_corr(residuals.values, lags=24, symmetrical=True)
 plot_autocorrelation_simple(plot_corr_full, title_str='Autocorrelation of Residuals\n ARMA(1,0)', original_array=residuals)
 
@@ -1249,28 +1248,38 @@ statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(1,0) Residuals\n')
 
 
 
-#Manual 1-step Prediction with only the significant coefficient
+#Manual 1-step Prediction
 
 
 #A series that contains all values needed for the predictions.
 #This includes the past values and the predicted values
 values=pd.Series(np.zeros(y_train.shape[0]))
 
+
+#The training dataset, but re-indexed for ease of access
 y_predict = pd.Series(y_train).copy()
-#Re-index for easy access
 y_predict.index=[i for i in range(0, y_predict.shape[0])]
+
 
 #Now, incrementally make predictions    
 for i in range(1,y_predict.shape[0]):
     values[i] = (0.794529*y_predict[i-1])
 
+
+
+#Set the index for ploting
 values.index = y_train.index
 
+#Remove the seeded values
 one_step = pd.Series(values.iloc[1::])
 
+#Calculate Residuals
 residuals = y_train.iloc[1::] - one_step
 
-#Plots the Training set
+
+
+#Plot the Training set
+#Includes the model in orange for cmparison
 plt.figure(figsize=(8,6))
 plt.plot(y_train, label='Training Set')
 plt.plot(model_pred, label='Model Predicted Values', alpha=0.9)
@@ -1284,6 +1293,7 @@ plt.show()
 statstoolsACF_PACF(residuals, lags=24, title_str='ARMA(1,0) Residuals\n')
 
 
+#It looks like our manual forcast model matches the model well
 
 #%%
 
@@ -1330,6 +1340,7 @@ def h_step_prediction(train_in, test_in, steps=50, return_val=False):
     varience_pred=varience_pred.append(pred_val)
     varience_pred.index = test_in.index[:steps]
     
+    #Check if value is returned, else plot
     if return_val == True:
         return varience_pred
     
@@ -1370,7 +1381,7 @@ h_step_prediction(y_train, y_test, steps=y_test.shape[0])
 
 collect=[]
 
-
+#Loop over each value of the testing set and generate a prediction for the following value
 y_forecast=pd.concat([y_train.tail(2), y_test])
 
 for i in range(1, y_forecast.shape[0]-1):
@@ -1378,6 +1389,8 @@ for i in range(1, y_forecast.shape[0]-1):
 
 one_step_forecast=pd.concat(collect)
 
+
+#Create the plot
 plt.figure(figsize=(8,6))
 plt.plot(y_test, label='Test Values')
 plt.plot(one_step_forecast, label='Forecast Values', alpha=0.9)

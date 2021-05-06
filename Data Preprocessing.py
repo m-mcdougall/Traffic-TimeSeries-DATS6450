@@ -29,7 +29,12 @@ traffic=traffic.drop_duplicates()
 
 #%%
 
-plt.plot(traffic.traffic_volume)
+#Preview the data
+plt.figure(figsize=[11,3])
+plt.plot(traffic.date_time, traffic.traffic_volume)
+plt.title('Traffic Volume Visualization')
+plt.ylabel('Traffic Density')
+plt.xlabel('Time')
 plt.show()
 
 
@@ -46,7 +51,10 @@ print(d)
 traffic_small = traffic[traffic.date_time>d].copy()
 
 plt.figure(figsize=[11,3])
-plt.plot(traffic_small.traffic_volume)
+plt.plot(traffic_small.date_time, traffic_small.traffic_volume)
+plt.title('Traffic Volume Visualization')
+plt.ylabel('Traffic Density')
+plt.xlabel('Time')
 plt.show()
 
 
