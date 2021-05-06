@@ -1,7 +1,9 @@
 # Traffic-TimeSeries-DATS6450
 
 
-Hourly Interstate 94 Westbound traffic volume for MN DoT ATR station 301, roughly midway between Minneapolis and St Paul, MN. Hourly weather features and holidays included for impacts on traffic volume.
+The dataset used for this project is the Metro Interstate Traffic Volume Data Set, detailing the hourly traffic along a the I-94 interstate highway between Minneapolis and St-Paul, in the westbound direction.
+
+The dataset quantifies hourly traffic by number of vehicles, per the Minnesota Department of Transportation, and also includes the hourly temperature, amount of rain in mm, amount of snow in mm, percentage of cloud cover, a qualitative description of the weather, in both short and detailed forms, and information if the date was a holiday.
 
 #### Data Source
 Hogue, J. (n.d.). UCI Machine Learning Repository: Metro Interstate Traffic Volume Data Set. https://archive.ics.uci.edu/ml/datasets/Metro+Interstate+Traffic+Volume.
